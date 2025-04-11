@@ -1,0 +1,23 @@
+Function                      CPU Time  CPU Time:Effective Time  CPU Time:Spin Time  CPU Time:Overhead Time  Module            Function (Full)               Source File                   Start Address
+----------------------------  --------  -----------------------  ------------------  ----------------------  ----------------  ----------------------------  ----------------------------  -------------
+link_transport_connection       2.719s                   2.719s                  0s                      0s  su3_omelyan_rhmc  link_transport_connection     path_transport.c              0x45360      
+fermion_force_fn_multi          2.350s                   2.350s                  0s                      0s  su3_omelyan_rhmc  fermion_force_fn_multi        fermion_force_fn_multi.c      0x65150      
+dslash_fn_field_special         1.200s                   1.200s                  0s                      0s  su3_omelyan_rhmc  dslash_fn_field_special       dslash_fn_dblstore.c          0x5bae0      
+mult_su3_an                     1.180s                   1.180s                  0s                      0s  su3_omelyan_rhmc  mult_su3_an                   [Unknown]                     0x734b0      
+path_product_fields             0.710s                   0.710s                  0s                      0s  su3_omelyan_rhmc  path_product_fields           path_product.c                0x20350      
+compute_gen_staple_field        0.340s                   0.340s                  0s                      0s  su3_omelyan_rhmc  compute_gen_staple_field      general_staple.c              0x51700      
+su3mat_copy                     0.130s                   0.130s                  0s                      0s  su3_omelyan_rhmc  su3mat_copy                   [Unknown]                     0x742c0      
+ks_multicg_offset_field_cpu     0.120s                   0.120s                  0s                      0s  su3_omelyan_rhmc  ks_multicg_offset_field_cpu   ks_multicg_offset.c           0x5da70      
+declare_strided_gather          0.100s                   0.100s                  0s                      0s  su3_omelyan_rhmc  declare_strided_gather        com_qmp.c                     0x3ddf0      
+update_u                        0.090s                   0.090s                  0s                      0s  su3_omelyan_rhmc  update_u                      update_u.c                    0x7160       
+su3_adjoint                     0.090s                   0.090s                  0s                      0s  su3_omelyan_rhmc  su3_adjoint                   [Unknown]                     0x74140      
+scalar_mult_su3_vector          0.040s                   0.040s                  0s                      0s  su3_omelyan_rhmc  scalar_mult_su3_vector        [Unknown]                     0x740c0      
+uncompress_anti_hermitian       0.030s                   0.030s                  0s                      0s  su3_omelyan_rhmc  uncompress_anti_hermitian     [Unknown]                     0x74350      
+imp_gauge_force_cpu             0.030s                   0.030s                  0s                      0s  su3_omelyan_rhmc  imp_gauge_force_cpu           gauge_force_imp.c             0x706a0      
+__memmove_avx_unaligned_erms    0.020s                   0.020s                  0s                      0s  libc.so.6         __memmove_avx_unaligned_erms  memmove-vec-unaligned-erms.S  0x188a00     
+rephase                         0.020s                   0.020s                  0s                      0s  su3_omelyan_rhmc  rephase                       rephase.c                     0x49980      
+__GI___libc_malloc              0.020s                   0.020s                  0s                      0s  libc.so.6         __GI___libc_malloc            malloc.c                      0xad650      
+find_backwards_gather           0.011s                   0.011s                  0s                      0s  su3_omelyan_rhmc  find_backwards_gather         fermion_force_fn_multi.c      0x64a10      
+complex_gaussian_rand_no        0.010s                   0.010s                  0s                      0s  su3_omelyan_rhmc  complex_gaussian_rand_no      [Unknown]                     0x74860      
+load_lnglinks                   0.010s                   0.010s                  0s                      0s  su3_omelyan_rhmc  load_lnglinks                 fermion_links_fn_load_milc.c  0x4af80      
+create_G_from_site              0.010s                   0.010s                  0s                      0s  su3_omelyan_rhmc  create_G_from_site            gauge_utilities.c             0x284b0      

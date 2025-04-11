@@ -1,0 +1,13 @@
+Function                         CPU Time  CPU Time:Effective Time  CPU Time:Spin Time  CPU Time:Overhead Time  Module        Function (Full)                  Source File  Start Address
+-------------------------------  --------  -----------------------  ------------------  ----------------------  ------------  -------------------------------  -----------  -------------
+dslash_fn_field_special            0.150s                   0.150s                  0s                      0s  su3_rmd_susc  dslash_fn_field_special          [Unknown]    0x57f40      
+mult_su3_sitelink_lathwvec         0.081s                   0.081s                  0s                      0s  su3_rmd_susc  mult_su3_sitelink_lathwvec       [Unknown]    0x67640      
+compute_gen_staple_field           0.080s                   0.080s                  0s                      0s  su3_rmd_susc  compute_gen_staple_field         [Unknown]    0x4db60      
+path_product_fields.part.0         0.040s                   0.040s                  0s                      0s  su3_rmd_susc  path_product_fields.part.0       [Unknown]    0x1b9d0      
+mult_adj_su3_fieldlink_lathwvec    0.040s                   0.040s                  0s                      0s  su3_rmd_susc  mult_adj_su3_fieldlink_lathwvec  [Unknown]    0x67200      
+scalar_mult_add_lathwvec_proj      0.029s                   0.029s                  0s                      0s  su3_rmd_susc  scalar_mult_add_lathwvec_proj    [Unknown]    0x67ef0      
+mult_su3_an                        0.020s                   0.020s                  0s                      0s  su3_rmd_susc  mult_su3_an                      [Unknown]    0x6fdb0      
+clear_latvec                       0.010s                   0.010s                  0s                      0s  su3_rmd_susc  clear_latvec                     [Unknown]    0x569a0      
+load_lnglinks                      0.010s                   0.010s                  0s                      0s  su3_rmd_susc  load_lnglinks                    [Unknown]    0x473e0      
+ks_congrad_parity_cpu              0.010s                   0.010s                  0s                      0s  su3_rmd_susc  ks_congrad_parity_cpu            [Unknown]    0x54180      
+update_u                           0.010s                   0.010s                  0s                      0s  su3_rmd_susc  update_u                         [Unknown]    0x40e0       

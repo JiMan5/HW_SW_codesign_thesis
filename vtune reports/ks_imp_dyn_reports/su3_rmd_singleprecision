@@ -1,0 +1,12 @@
+Function                         CPU Time  CPU Time:Effective Time  CPU Time:Spin Time  CPU Time:Overhead Time  Module   Function (Full)                  Source File  Start Address
+-------------------------------  --------  -----------------------  ------------------  ----------------------  -------  -------------------------------  -----------  -------------
+compute_gen_staple_field           0.130s                   0.130s                  0s                      0s  su3_rmd  compute_gen_staple_field         [Unknown]    0x48a00      
+dslash_fn_field_special            0.050s                   0.050s                  0s                      0s  su3_rmd  dslash_fn_field_special          [Unknown]    0x51c50      
+scalar_mult_add_lathwvec_proj      0.040s                   0.040s                  0s                      0s  su3_rmd  scalar_mult_add_lathwvec_proj    [Unknown]    0x627d0      
+path_product_fields.part.0         0.031s                   0.031s                  0s                      0s  su3_rmd  path_product_fields.part.0       [Unknown]    0x19670      
+mult_adj_su3_fieldlink_lathwvec    0.020s                   0.020s                  0s                      0s  su3_rmd  mult_adj_su3_fieldlink_lathwvec  [Unknown]    0x61a70      
+mult_su3_sitelink_lathwvec         0.020s                   0.020s                  0s                      0s  su3_rmd  mult_su3_sitelink_lathwvec       [Unknown]    0x61ee0      
+su3_adjoint                        0.019s                   0.019s                  0s                      0s  su3_rmd  su3_adjoint                      [Unknown]    0x6b2b0      
+mult_su3_an                        0.010s                   0.010s                  0s                      0s  su3_rmd  mult_su3_an                      [Unknown]    0x6a5b0      
+scalar_mult_add_lathwvec           0.010s                   0.010s                  0s                      0s  su3_rmd  scalar_mult_add_lathwvec         [Unknown]    0x63e60      
+load_lnglinks                      0.010s                   0.010s                  0s                      0s  su3_rmd  load_lnglinks                    [Unknown]    0x42b20      

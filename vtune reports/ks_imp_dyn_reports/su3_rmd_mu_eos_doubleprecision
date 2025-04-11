@@ -1,0 +1,21 @@
+Function                       CPU Time  CPU Time:Effective Time  CPU Time:Spin Time  CPU Time:Overhead Time  Module          Function (Full)                Source File                   Start Address
+-----------------------------  --------  -----------------------  ------------------  ----------------------  --------------  -----------------------------  ----------------------------  -------------
+dslash_fn_field_special          4.018s                   4.018s                  0s                      0s  su3_rmd_mu_eos  dslash_fn_field_special        [Unknown]                     0x57a50      
+ks_congrad_parity_cpu            0.212s                   0.212s                  0s                      0s  su3_rmd_mu_eos  ks_congrad_parity_cpu          [Unknown]                     0x53c90      
+compute_gen_staple_field         0.100s                   0.100s                  0s                      0s  su3_rmd_mu_eos  compute_gen_staple_field       [Unknown]                     0x4d510      
+mult_su3_an                      0.081s                   0.081s                  0s                      0s  su3_rmd_mu_eos  mult_su3_an                    [Unknown]                     0x75be0      
+scalar_mult_add_lathwvec_proj    0.080s                   0.080s                  0s                      0s  su3_rmd_mu_eos  scalar_mult_add_lathwvec_proj  [Unknown]                     0x67a00      
+mult_su3_sitelink_lathwvec       0.049s                   0.049s                  0s                      0s  su3_rmd_mu_eos  mult_su3_sitelink_lathwvec     [Unknown]                     0x67150      
+path_product_fields.part.0       0.041s                   0.041s                  0s                      0s  su3_rmd_mu_eos  path_product_fields.part.0     [Unknown]                     0x1ba60      
+declare_strided_gather           0.040s                   0.040s                  0s                      0s  su3_rmd_mu_eos  declare_strided_gather         [Unknown]                     0x39500      
+imp_gauge_force_cpu              0.020s                   0.020s                  0s                      0s  su3_rmd_mu_eos  imp_gauge_force_cpu            [Unknown]                     0x6c610      
+___printf_chk                    0.020s                   0.020s                  0s                      0s  libc.so.6       ___printf_chk                  printf_chk.c                  0x137960     
+__memmove_avx_unaligned_erms     0.020s                   0.020s                  0s                      0s  libc.so.6       __memmove_avx_unaligned_erms   memmove-vec-unaligned-erms.S  0x188a00     
+wait_gather                      0.010s                   0.010s                  0s                      0s  su3_rmd_mu_eos  wait_gather                    [Unknown]                     0x39d70      
+__GI___libc_malloc               0.010s                   0.010s                  0s                      0s  libc.so.6       __GI___libc_malloc             malloc.c                      0xad650      
+update_u                         0.010s                   0.010s                  0s                      0s  su3_rmd_mu_eos  update_u                       [Unknown]                     0x4170       
+__GI___libc_free                 0.010s                   0.010s                  0s                      0s  libc.so.6       __GI___libc_free               malloc.c                      0xadd30      
+dnM_dmun_R.constprop.0           0.010s                   0.010s                  0s                      0s  su3_rmd_mu_eos  dnM_dmun_R.constprop.0         [Unknown]                     0x6fd30      
+trace                            0.010s                   0.010s                  0s                      0s  su3_rmd_mu_eos  trace                          [Unknown]                     0x6f8d0      
+derivatives.constprop.0          0.010s                   0.010s                  0s                      0s  su3_rmd_mu_eos  derivatives.constprop.0        [Unknown]                     0x70700      
+su3_adjoint                      0.009s                   0.009s                  0s                      0s  su3_rmd_mu_eos  su3_adjoint                    [Unknown]                     0x768a0      

@@ -1,0 +1,24 @@
+Function                      CPU Time  CPU Time:Effective Time  CPU Time:Spin Time  CPU Time:Overhead Time  Module        Function (Full)               Source File                   Start Address
+----------------------------  --------  -----------------------  ------------------  ----------------------  ------------  ----------------------------  ----------------------------  -------------
+link_transport_connection       2.260s                   2.260s                  0s                      0s  su3_leapfrog  link_transport_connection     path_transport.c              0x45280      
+dslash_fn_field_special         2.140s                   2.140s                  0s                      0s  su3_leapfrog  dslash_fn_field_special       dslash_fn_dblstore.c          0x5b980      
+fermion_force_fn_multi          2.060s                   2.060s                  0s                      0s  su3_leapfrog  fermion_force_fn_multi        fermion_force_fn_multi.c      0x64ff0      
+mult_su3_an                     0.870s                   0.870s                  0s                      0s  su3_leapfrog  mult_su3_an                   [Unknown]                     0x73350      
+path_product_fields             0.750s                   0.750s                  0s                      0s  su3_leapfrog  path_product_fields           path_product.c                0x20270      
+compute_gen_staple_field        0.380s                   0.380s                  0s                      0s  su3_leapfrog  compute_gen_staple_field      general_staple.c              0x515a0      
+ks_multicg_offset_field_cpu     0.150s                   0.150s                  0s                      0s  su3_leapfrog  ks_multicg_offset_field_cpu   ks_multicg_offset.c           0x5d910      
+su3mat_copy                     0.140s                   0.140s                  0s                      0s  su3_leapfrog  su3mat_copy                   [Unknown]                     0x74160      
+declare_strided_gather          0.110s                   0.110s                  0s                      0s  su3_leapfrog  declare_strided_gather        com_qmp.c                     0x3dd10      
+su3_adjoint                     0.100s                   0.100s                  0s                      0s  su3_leapfrog  su3_adjoint                   [Unknown]                     0x73fe0      
+scalar_mult_su3_vector          0.080s                   0.080s                  0s                      0s  su3_leapfrog  scalar_mult_su3_vector        [Unknown]                     0x73f60      
+update_u                        0.060s                   0.060s                  0s                      0s  su3_leapfrog  update_u                      update_u.c                    0x6ff0       
+__memmove_avx_unaligned_erms    0.060s                   0.060s                  0s                      0s  libc.so.6     __memmove_avx_unaligned_erms  memmove-vec-unaligned-erms.S  0x188a00     
+imp_gauge_force_cpu             0.050s                   0.050s                  0s                      0s  su3_leapfrog  imp_gauge_force_cpu           gauge_force_imp.c             0x70540      
+__GI___libc_free                0.020s                   0.020s                  0s                      0s  libc.so.6     __GI___libc_free              malloc.c                      0xadd30      
+ks_congrad_parity_cpu           0.020s                   0.020s                  0s                      0s  su3_leapfrog  ks_congrad_parity_cpu         d_congrad5_fn_milc.c          0x57bc0      
+su3vec_copy                     0.010s                   0.010s                  0s                      0s  su3_leapfrog  su3vec_copy                   [Unknown]                     0x741a0      
+clearvec                        0.010s                   0.010s                  0s                      0s  su3_leapfrog  clearvec                      [Unknown]                     0x73040      
+find_backwards_gather           0.010s                   0.010s                  0s                      0s  su3_leapfrog  find_backwards_gather         fermion_force_fn_multi.c      0x648b0      
+scalar_mult_su3_matrix          0.010s                   0.010s                  0s                      0s  su3_leapfrog  scalar_mult_su3_matrix        [Unknown]                     0x73f90      
+load_lnglinks                   0.010s                   0.010s                  0s                      0s  su3_leapfrog  load_lnglinks                 fermion_links_fn_load_milc.c  0x4ae20      
+uncompress_anti_hermitian       0.010s                   0.010s                  0s                      0s  su3_leapfrog  uncompress_anti_hermitian     [Unknown]                     0x741f0      

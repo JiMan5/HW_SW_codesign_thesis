@@ -1,0 +1,24 @@
+Function                         CPU Time  CPU Time:Effective Time  CPU Time:Spin Time  CPU Time:Overhead Time  Module          Function (Full)                  Source File                  Start Address
+-------------------------------  --------  -----------------------  ------------------  ----------------------  --------------  -------------------------------  ---------------------------  -------------
+dslash_fn_field_special            3.830s                   3.830s                  0s                      0s  su3_rmd_mu_eos  dslash_fn_field_special          [Unknown]                    0x525c0      
+ks_congrad_parity_cpu              0.190s                   0.190s                  0s                      0s  su3_rmd_mu_eos  ks_congrad_parity_cpu            [Unknown]                    0x4e640      
+compute_gen_staple_field           0.150s                   0.150s                  0s                      0s  su3_rmd_mu_eos  compute_gen_staple_field         [Unknown]                    0x49270      
+path_product_fields.part.0         0.080s                   0.080s                  0s                      0s  su3_rmd_mu_eos  path_product_fields.part.0       [Unknown]                    0x19700      
+scalar_mult_add_lathwvec_proj      0.080s                   0.080s                  0s                      0s  su3_rmd_mu_eos  scalar_mult_add_lathwvec_proj    [Unknown]                    0x63140      
+mult_adj_su3_mat_vec               0.070s                   0.070s                  0s                      0s  su3_rmd_mu_eos  mult_adj_su3_mat_vec             [Unknown]                    0x739f0      
+declare_strided_gather             0.060s                   0.060s                  0s                      0s  su3_rmd_mu_eos  declare_strided_gather           [Unknown]                    0x36c40      
+mult_su3_an                        0.030s                   0.030s                  0s                      0s  su3_rmd_mu_eos  mult_su3_an                      [Unknown]                    0x73d00      
+mult_su3_mat_vec                   0.030s                   0.030s                  0s                      0s  su3_rmd_mu_eos  mult_su3_mat_vec                 [Unknown]                    0x74560      
+mult_su3_sitelink_lathwvec         0.030s                   0.030s                  0s                      0s  su3_rmd_mu_eos  mult_su3_sitelink_lathwvec       [Unknown]                    0x62850      
+do_gather                          0.020s                   0.020s                  0s                      0s  su3_rmd_mu_eos  do_gather                        [Unknown]                    0x373d0      
+mult_adj_su3_fieldlink_lathwvec    0.020s                   0.020s                  0s                      0s  su3_rmd_mu_eos  mult_adj_su3_fieldlink_lathwvec  [Unknown]                    0x623e0      
+scalar_mult_sub_su3_vector         0.020s                   0.020s                  0s                      0s  su3_rmd_mu_eos  scalar_mult_sub_su3_vector       [Unknown]                    0x74990      
+___printf_chk                      0.020s                   0.020s                  0s                      0s  libc.so.6       ___printf_chk                    printf_chk.c                 0x137960     
+__memset_avx2_unaligned_erms       0.010s                   0.010s                  0s                      0s  libc.so.6       __memset_avx2_unaligned_erms     memset-vec-unaligned-erms.S  0x189400     
+dnM_dmun_R.constprop.0             0.010s                   0.010s                  0s                      0s  su3_rmd_mu_eos  dnM_dmun_R.constprop.0           [Unknown]                    0x6b390      
+dnM_dmun_R                         0.010s                   0.010s                  0s                      0s  su3_rmd_mu_eos  dnM_dmun_R                       [Unknown]                    0x6abc0      
+dnM_dmun_R.constprop.1             0.010s                   0.010s                  0s                      0s  su3_rmd_mu_eos  dnM_dmun_R.constprop.1           [Unknown]                    0x6b690      
+start_gather_field                 0.010s                   0.010s                  0s                      0s  su3_rmd_mu_eos  start_gather_field               [Unknown]                    0x37790      
+make_anti_hermitian                0.010s                   0.010s                  0s                      0s  su3_rmd_mu_eos  make_anti_hermitian              [Unknown]                    0x746c0      
+__GI___libc_malloc                 0.010s                   0.010s                  0s                      0s  libc.so.6       __GI___libc_malloc               malloc.c                     0xad650      
+load_lnglinks                      0.010s                   0.010s                  0s                      0s  su3_rmd_mu_eos  load_lnglinks                    [Unknown]                    0x43390      
