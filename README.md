@@ -7,10 +7,10 @@
 | Function | Τι κάνει | Τι bottom level καλεί |
 |----------|-------|-------|
 | dslash_fn_field_special | Εφαρμόζει τον Dirac operator σε πεδίο fermion. | mult_su3_mat_vec_sum_4dir, mult_su3_mat_vec, add_su3_vector, sub_su3_vector |
-| fermion_force_fn_multi | Υπολογίζει τη συμβολή των fermions στην gauge δύναμη. | su3_projector, mult_su3_na, scalar_mult_add_su3_matrix, link_transport_connection |
+| fermion_force_fn_multi | Υπολογίζει τη συμβολή των fermions στην gauge δύναμη. | su3_projector, mult_su3_na, scalar_mult_add_su3_matrix|
 | path_product_fields | Υπολογίζει το γινόμενο SU(3) συνδέσμων κατά μήκος μονοπατιού. | mult_su3_nn, mult_su3_na |
 | compute_gen_staple_field | Κατασκευάζει το staple (3-link term) για βελτιωμένες δράσεις. | mult_su3_na, mult_su3_nn, scalar_mult_add_su3_matrix |
-| fn_fermion_force_multi_hisq_smearing | HISQ έκδοση του fermion force με smearing και Naik όρους. | link_transport_connection_hisq, mult_su3_na, scalar_mult_add_su3_matrix, su3_projector |
+| fn_fermion_force_multi_hisq_smearing | HISQ έκδοση του fermion force με smearing και Naik όρους. | mult_su3_na, scalar_mult_add_su3_matrix, su3_projector |
 | link_transport_connection | Μεταφέρει SU(3) πίνακα κατά μία κατεύθυνση. | mult_su3_nn, mult_su3_an |
 | link_gather_connection_hisq | Μαζεύει SU(3) από γειτονικό site. | Δεν καλεί κάποια computationally heavy bottom level συνάρτηση, παρόλο που κάποιες φορές φαίνεται να παίρνει χρόνο |
 
