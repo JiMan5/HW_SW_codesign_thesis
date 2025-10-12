@@ -1,0 +1,6 @@
+sites_on_node 131072
+sizeof_su3_vector 24
+sizeof_su3_matrix 72
+sizeof_anti_hermitmat 40
+nterms 8
+num_q_paths 688
