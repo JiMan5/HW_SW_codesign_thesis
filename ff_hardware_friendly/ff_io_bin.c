@@ -91,6 +91,7 @@ anti_hermitmat **read_mom(const char *fname, size_t *sites_on_node) {
         }
     }
     fclose(f);
+    printf("read moms\n");
     return mom;
 }
 
