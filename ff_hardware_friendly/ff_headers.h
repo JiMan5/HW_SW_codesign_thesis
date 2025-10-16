@@ -1,7 +1,17 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+//fixed consts for run
+#define EPS_CONST          0.010000f
+#define NTERMS_CONST       8
+#define SITES_ON_NODE_CONST 131072UL
+#define NUM_Q_PATHS_CONST  688
+#define NX 16
+#define NY 16
+#define NZ 16
+#define NT 32
 
+//directions
 #define XUP 0
 #define YUP 1
 #define ZUP 2
@@ -14,7 +24,25 @@
 #define NODIR -1  /* not a direction */
 
 #define OPP_DIR(dir)	(7-(dir))	/* Opposite direction */
+#define GOES_FORWARDS(dir) ((dir)<=TUP)
+#define GOES_BACKWARDS(dir) ((dir)>TUP)
 #define NDIRS 8				/* number of directions */
+
+#define CMUL_J(a,b,c) { (c).real = (a).real*(b).real + (a).imag*(b).imag; \
+	  	        (c).imag = (a).imag*(b).real - (a).real*(b).imag; }
+
+#define CMUL(a,b,c) { (c).real = (a).real*(b).real - (a).imag*(b).imag; \
+		      (c).imag = (a).real*(b).imag + (a).imag*(b).real; }
+
+#define CADD(a,b,c) { (c).real = (a).real + (b).real;  \
+		      (c).imag = (a).imag + (b).imag; }
+
+#define CSUM(a,b) { (a).real += (b).real; (a).imag += (b).imag; }
+
+#define CMULJ_(a,b,c) { (c).real = (a).real*(b).real + (a).imag*(b).imag; \
+		        (c).imag = (a).real*(b).imag - (a).imag*(b).real; }
+
+#define CONJG(a,b) { (b).real = (a).real; (b).imag = -(a).imag; }
 
 typedef float Real;
 
@@ -136,14 +164,26 @@ struct msg_tag {
 };  /* don't need anything */
 
 //io_bin.c
-Real read_eps(const char *fname);
-int read_nterms(const char *fname);
-Real *read_residues(const char *fname, int nterms);
-su3_vector **read_multi_x(const char *fname, int nterms, size_t sites_on_node);
-Q_path *read_qpaths(const char *fname, int *num_q_paths);
-su3_matrix **read_links(const char *fname, size_t *sites_on_node);
-anti_hermitmat **read_mom(const char *fname, size_t *sites_on_node);
+
+//read files
+Real *read_residues(const char *fname);
+su3_vector **read_multi_x(const char *fname);
+Q_path *read_qpaths(const char *fname);
+su3_matrix **read_links(const char *fname);
+anti_hermitmat **read_mom(const char *fname);
 //void *read_lattice(const char *fname, size_t *sites_on_node, size_t site_size);
+
+//calculations
+void clear_su3mat( su3_matrix *dest );
+void su3_projector( su3_vector *a, su3_vector *b, su3_matrix *c );
+void scalar_mult_add_su3_matrix(su3_matrix *a,su3_matrix *b,Real s, su3_matrix *c);
+void mult_su3_nn( su3_matrix *a, su3_matrix *b, su3_matrix *c );
+void mult_su3_na(  su3_matrix *a, su3_matrix *b, su3_matrix *c );
+void mult_su3_an( su3_matrix *a, su3_matrix *b, su3_matrix *c );
+void su3_adjoint( su3_matrix *a, su3_matrix *b );
+void uncompress_anti_hermitian( const anti_hermitmat * const mat_antihermit, su3_matrix *mat_su3 );
+void add_su3_matrix( su3_matrix *a, su3_matrix *b, su3_matrix *c );
+void make_anti_hermitian( su3_matrix *m3, anti_hermitmat *ah3 );
 
 //fermion_force_hw.c
 void fermion_force_fn_multi_hw(Real eps, Real *residues, su3_vector **multi_x, int nterms, int prec, fermion_links_t *fl, su3_matrix *links, anti_hermitmat *mom, size_t sites_on_node);

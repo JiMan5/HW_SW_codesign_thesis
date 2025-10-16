@@ -3,24 +3,46 @@
 #include <stdint.h>
 #include "ff_headers.h"
 
+
+//neighbor indexing algo
+static inline int neighbor_index(int i, int dir)
+{
+    int x = i % NX;
+    int y = (i / NX) % NY;
+    int z = (i / (NX * NY)) % NZ;
+    int t = i / (NX * NY * NZ);
+
+    switch(dir)
+    {
+        case XUP:   x = (x + 1) % NX; break;
+        case XDOWN: x = (x + NX - 1) % NX; break;
+        case YUP:   y = (y + 1) % NY; break;
+        case YDOWN: y = (y + NY - 1) % NY; break;
+        case ZUP:   z = (z + 1) % NZ; break;
+        case ZDOWN: z = (z + NZ - 1) % NZ; break;
+        case TUP:   t = (t + 1) % NT; break;
+        case TDOWN: t = (t + NT - 1) % NT; break;
+        default: break; // NODIR or invalid
+    }
+
+    return x + NX * (y + NY * (z + NZ * t));
+}
+
+
 void 
-fermion_force_fn_multi( Real eps, Real *residues, 
-			su3_vector **multi_x, int nterms, int prec,
-			fermion_links_t *fl ){
-  /* prec is ignored for now */
-  /* note CG_solution and Dslash * solution are combined in "multi_x" */
-  /* New version 1/21/99.  Use forward part of Dslash to get force */
-  /* see long comment at end */
-  /* For each link we need multi_x transported from both ends of path. */
-  ks_action_paths *ap = get_action_paths(fl);
+fermion_force_fn_multi(
+  Real *residues,
+	su3_vector **multi_x,
+  Q_path *q_paths,
+  su3_matrix (*links)[4],
+	anti_hermitmat (*mom)[4]
+  ){
+
   int term;
-  register int i,j,k,lastdir=-99,ipath,ilink;
-  register site *s;
+  int i,j,k,lastdir=-99,ipath,ilink;
   int length,dir,odir;
   su3_matrix tmat,tmat2;
   Real ferm_epsilon, coeff;
-  int num_q_paths = ap->p.num_q_paths;
-  Q_path *q_paths = ap->p.q_paths;
   Q_path *this_path;	// pointer to current path
   Q_path *last_path;	// pointer to previous path
   msg_tag *mtag[2];
@@ -29,14 +51,6 @@ fermion_force_fn_multi( Real eps, Real *residues,
   su3_matrix *mats_along_path[MAX_PATH_LENGTH+1]; // 
   su3_matrix *force_accum[4];  // accumulate force
   int netbackdir, last_netbackdir;	// backwards direction for entire path
-//int tempflops = 0; //TEMP
-
-#ifdef FFTIME
-  int nflop = 966456 + 1440*nterms; // Asqtad action 11/3/06 version of code;
-  double dtime;
-#endif
-  /* node0_printf("STARTING fermion_force_fn_multi() nterms = %d\n",nterms); */
-  if( nterms==0 )return;
 
   for(i=0;i<=MAX_PATH_LENGTH;i++){
      oprod_along_path[i] = (su3_matrix *) malloc(sites_on_node*sizeof(su3_matrix) );
@@ -49,10 +63,6 @@ fermion_force_fn_multi( Real eps, Real *residues,
   }
   mat_tmp0 = (su3_matrix *) special_alloc(sites_on_node*sizeof(su3_matrix) );
   if( mat_tmp0 == NULL ){printf("Node %d NO ROOM\n",this_node); exit(0); }
-
-#ifdef FFTIME
-	dtime=-dclock();
-#endif
 	
   ferm_epsilon = 2.0*eps; // we only do forward paths, gives factor of 2
   if( first_force==1 ){
