@@ -2,10 +2,11 @@
 #include <stdint.h>
 
 //fixed consts for run
-#define EPS_CONST          0.010000f
-#define NTERMS_CONST       8
-#define SITES_ON_NODE_CONST 131072UL
-#define NUM_Q_PATHS_CONST  688
+#define EPS          0.010000f
+#define NTERMS       8
+#define SITES_ON_NODE 131072UL
+#define NUM_Q_PATHS  688
+#define FORW_Q_PATHS 344
 #define NX 16
 #define NY 16
 #define NZ 16

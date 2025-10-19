@@ -8,10 +8,10 @@
 Real *read_residues(const char *fname) {
     FILE *f = fopen(fname, "rb");
     if(!f){ perror(fname); exit(1); }
-    Real *res = malloc(sizeof(Real) * NTERMS_CONST);
-    fread(res, sizeof(Real), NTERMS_CONST, f);
+    Real *res = malloc(sizeof(Real) * NTERMS);
+    fread(res, sizeof(Real), NTERMS, f);
     fclose(f);
-    printf("read residues (nterms = %d)\n", NTERMS_CONST);
+    printf("read residues (nterms = %d)\n", NTERMS);
     return res;
 }
 
@@ -20,14 +20,14 @@ Real *read_residues(const char *fname) {
 su3_vector **read_multi_x(const char *fname) {
     FILE *f = fopen(fname, "rb");
     if(!f){ perror(fname); exit(1); }
-    su3_vector **multi_x = malloc(sizeof(su3_vector*) * NTERMS_CONST);
-    for(int t = 0; t < NTERMS_CONST; t++) {
-        multi_x[t] = malloc(sizeof(su3_vector) * SITES_ON_NODE_CONST);
-        fread(multi_x[t], sizeof(su3_vector), SITES_ON_NODE_CONST, f);
+    su3_vector **multi_x = malloc(sizeof(su3_vector*) * NTERMS);
+    for(int t = 0; t < NTERMS; t++) {
+        multi_x[t] = malloc(sizeof(su3_vector) * SITES_ON_NODE);
+        fread(multi_x[t], sizeof(su3_vector), SITES_ON_NODE, f);
     }
     fclose(f);
     printf("read multi_x (nterms = %d, sites = %lu)\n",
-           NTERMS_CONST, (unsigned long)SITES_ON_NODE_CONST);
+           NTERMS, (unsigned long)SITES_ON_NODE);
     return multi_x;
 }
 
@@ -37,14 +37,14 @@ Q_path *read_qpaths(const char *fname) {
     if(!f){ perror(fname); exit(1); }
     int tmp;
     fread(&tmp, sizeof(int), 1, f);
-    if(tmp != NUM_Q_PATHS_CONST) {
+    if(tmp != NUM_Q_PATHS) {
         printf("Warning: expected %d q_paths, file has %d\n",
-               NUM_Q_PATHS_CONST, tmp);
+               NUM_Q_PATHS, tmp);
     }
-    Q_path *paths = malloc(sizeof(Q_path) * NUM_Q_PATHS_CONST);
-    fread(paths, sizeof(Q_path), NUM_Q_PATHS_CONST, f);
+    Q_path *paths = malloc(sizeof(Q_path) * NUM_Q_PATHS);
+    fread(paths, sizeof(Q_path), NUM_Q_PATHS, f);
     fclose(f);
-    printf("read qpaths (num_q_paths = %d)\n", NUM_Q_PATHS_CONST);
+    printf("read qpaths (num_q_paths = %d)\n", NUM_Q_PATHS);
     return paths;
 }
 
@@ -54,17 +54,17 @@ su3_matrix **read_links(const char *fname) {
     if(!f){ perror(fname); exit(1); }
     size_t tmp_sites;
     fread(&tmp_sites, sizeof(size_t), 1, f);
-    if(tmp_sites != SITES_ON_NODE_CONST) {
+    if(tmp_sites != SITES_ON_NODE) {
         printf("Warning: expected %lu sites, file has %lu\n",
-               (unsigned long)SITES_ON_NODE_CONST, (unsigned long)tmp_sites);
+               (unsigned long)SITES_ON_NODE, (unsigned long)tmp_sites);
     }
-    su3_matrix **links = malloc(sizeof(su3_matrix*) * SITES_ON_NODE_CONST);
-    for(size_t i = 0; i < SITES_ON_NODE_CONST; i++) {
+    su3_matrix **links = malloc(sizeof(su3_matrix*) * SITES_ON_NODE);
+    for(size_t i = 0; i < SITES_ON_NODE; i++) {
         links[i] = malloc(sizeof(su3_matrix) * 4); // 4 directions
         fread(links[i], sizeof(su3_matrix), 4, f);
     }
     fclose(f);
-    printf("read links (sites = %lu)\n", (unsigned long)SITES_ON_NODE_CONST);
+    printf("read links (sites = %lu)\n", (unsigned long)SITES_ON_NODE);
     return links;
 }
 
@@ -75,17 +75,17 @@ anti_hermitmat **read_mom(const char *fname) {
     if(!f){ perror(fname); exit(1); }
     size_t tmp_sites;
     fread(&tmp_sites, sizeof(size_t), 1, f);
-    if(tmp_sites != SITES_ON_NODE_CONST) {
+    if(tmp_sites != SITES_ON_NODE) {
         printf("Warning: expected %lu sites, file has %lu\n",
-               (unsigned long)SITES_ON_NODE_CONST, (unsigned long)tmp_sites);
+               (unsigned long)SITES_ON_NODE, (unsigned long)tmp_sites);
     }
-    anti_hermitmat **mom = malloc(sizeof(anti_hermitmat*) * SITES_ON_NODE_CONST);
-    for(size_t i = 0; i < SITES_ON_NODE_CONST; i++) {
+    anti_hermitmat **mom = malloc(sizeof(anti_hermitmat*) * SITES_ON_NODE);
+    for(size_t i = 0; i < SITES_ON_NODE; i++) {
         mom[i] = malloc(sizeof(anti_hermitmat) * 4); // 4 directions
         fread(mom[i], sizeof(anti_hermitmat), 4, f);
     }
     fclose(f);
-    printf("read mom (sites = %lu)\n", (unsigned long)SITES_ON_NODE_CONST);
+    printf("read mom (sites = %lu)\n", (unsigned long)SITES_ON_NODE);
     return mom;
 }
 

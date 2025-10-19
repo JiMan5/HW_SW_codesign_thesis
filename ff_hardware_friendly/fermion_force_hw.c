@@ -139,7 +139,6 @@ fermion_force_fn_multi(
     for(ilink=j;ilink>=k;ilink--){
       link_transport_connection( oprod_along_path[length-ilink-1],
       oprod_along_path[length-ilink], mat_tmp0, this_path->dir[ilink]  );
-//tempflops+=9*22;
     }
 
    /* maintain an array of transports "to this point" along the path.
@@ -167,7 +166,6 @@ fermion_force_fn_multi(
         dir = OPP_DIR(this_path->dir[ilink]);
         link_transport_connection( mats_along_path[ilink],
         mats_along_path[ilink+1], mat_tmp0, dir  );
-//tempflops+=9*22;
       }
     } // end loop over links
 
@@ -187,7 +185,6 @@ fermion_force_fn_multi(
       else if( ilink>0) FORALLSITES(i,s){
         mult_su3_na( &(oprod_along_path[length-ilink][i]),  &(mats_along_path[ilink][i]), &(mat_tmp0[i]) );
       }
-//if(ilink>0)tempflops+=9*22;
 
       /* add in contribution to the force */
       /* Put antihermitian traceless part into momentum */
@@ -200,7 +197,6 @@ fermion_force_fn_multi(
 	    scalar_mult_add_su3_matrix( &(force_accum[dir][i]), &(mat_tmp0[i]),
                 -coeff, &(force_accum[dir][i]) );
         }
-//tempflops+=36;
       }
       if( ilink>0 && GOES_BACKWARDS(lastdir) ){
 	odir = OPP_DIR(lastdir);
@@ -212,7 +208,6 @@ fermion_force_fn_multi(
 	    scalar_mult_add_su3_matrix( &(force_accum[odir][i]), &(mat_tmp0[i]),
                 coeff, &(force_accum[odir][i]) );
 	}
-//tempflops+=36;
       }
 
       lastdir = dir;
@@ -221,15 +216,12 @@ fermion_force_fn_multi(
     last_path = &(q_paths_sorted[ipath]);
   } /* end loop over paths */
 
-  // add force to momentum
   for(dir=XUP; dir<=TUP; dir++)FORALLSITES(i,s){
      uncompress_anti_hermitian( &(s->mom[dir]), &tmat2 );
      add_su3_matrix( &tmat2, &(force_accum[dir][i]), &tmat2 );
      make_anti_hermitian( &tmat2, &(s->mom[dir]) );
   }
-//tempflops+=4*18;
-//tempflops+=4*18;
-	
+
   free( mat_tmp0 );
   for(i=0;i<=MAX_PATH_LENGTH;i++){
      free( oprod_along_path[i] );
@@ -240,12 +232,6 @@ fermion_force_fn_multi(
   for(i=XUP;i<=TUP;i++){
      free( force_accum[i] );
   }
-#ifdef FFTIME
-  dtime += dclock();
-  node0_printf("FFTIME:  time = %e (FNMAT) terms = %d mflops = %e\n",dtime,nterms,
-	     (Real)nflop*volume/(1e6*dtime*numnodes()) );
-#endif
-//printf("FF flops = %d\n",tempflops);
 } /* fermion_force_fn_multi */
 
 

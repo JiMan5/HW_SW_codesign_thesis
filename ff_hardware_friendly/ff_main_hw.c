@@ -8,6 +8,7 @@ int main(void) {
     Real *residues = NULL;
     su3_vector **multi_x = NULL;
     Q_path *q_paths = NULL;
+    Q_path *qpaths_forward = malloc(sizeof(Q_path) * FORW_Q_PATHS); //only with forwback == 1
     su3_matrix **links = NULL;
     anti_hermitmat **mom_before = NULL;
 
@@ -22,13 +23,28 @@ int main(void) {
 
     printf("\nAll binary data loaded\n");
 
+
+    // Allocate filtered array
+    
+    if (!qpaths_forward) {
+        fprintf(stderr, "Error: failed to allocate qpaths_forward\n");
+        exit(1);
+    }
+
+    int idx = 0;
+    for (int i = 0; i < NUM_Q_PATHS; i++) {
+        if (q_paths[i].forwback == 1) {
+            qpaths_forward[idx++] = q_paths[i];
+        }
+    }
+
     free(residues);
-    for(int t=0; t<NTERMS_CONST; t++) {
+    for(int t=0; t<NTERMS; t++) {
         free(multi_x[t]);
     }
     free(multi_x);
     free(q_paths);
-    for(size_t i=0; i<SITES_ON_NODE_CONST; i++) {
+    for(size_t i=0; i<SITES_ON_NODE; i++) {
         free(links[i]);
         free(mom_before[i]);
     }
