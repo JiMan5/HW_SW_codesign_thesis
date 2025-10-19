@@ -40,10 +40,7 @@ int main(void) {
 
     int bad_paths = 0;
     for (int i = 0; i < FORW_Q_PATHS; i++) {
-        compute_net_disp(&qpaths_forward[i],
-                        &disp_table[i].axis,
-                        &disp_table[i].steps,
-                        &disp_table[i].sign);
+        compute_net_disp(&qpaths_forward[i], &disp_table[i].axis, &disp_table[i].steps, &disp_table[i].sign);
 
         if (disp_table[i].axis == -1) {
             printf("Warning: Path %d has multi-axis displacement, skipping.\n", i);

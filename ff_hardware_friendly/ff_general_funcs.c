@@ -236,7 +236,7 @@ void make_anti_hermitian( su3_matrix *m3, anti_hermitmat *ah3 ) {
 //helpers for path directions and indexing///////////////////////
 
 //net displacement
-static void compute_net_disp(const Q_path *path, int *axis_out, int *steps_out, int *sign_out) {
+void compute_net_disp(const Q_path *path, int *axis_out, int *steps_out, int *sign_out) {
     int disp[4] = {0,0,0,0};
     for (int i = 0; i < path->length; ++i) {
         int d = path->dir[i];
@@ -268,7 +268,7 @@ static void compute_net_disp(const Q_path *path, int *axis_out, int *steps_out, 
 }
 
 //index
-static inline int neighbor_index(int i, int dir)
+int neighbor_index(int i, int dir)
 {
     int x = i % NX;
     int y = (i / NX) % NY;

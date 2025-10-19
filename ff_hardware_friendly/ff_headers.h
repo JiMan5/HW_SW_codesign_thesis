@@ -194,8 +194,8 @@ void make_anti_hermitian( su3_matrix *m3, anti_hermitmat *ah3 );
 
 //helpers for path directions and indexing///////////////////////
 
-static void compute_net_disp(const Q_path *path, int *axis_out, int *steps_out, int *sign_out);
-static inline int neighbor_index(int i, int dir);
+void compute_net_disp(const Q_path *path, int *axis_out, int *steps_out, int *sign_out);
+int neighbor_index(int i, int dir);
 
 //fermion_force_hw.c
 void fermion_force_fn_multi_hw(Real eps, Real *residues, su3_vector **multi_x, int nterms, int prec, fermion_links_t *fl, su3_matrix *links, anti_hermitmat *mom, size_t sites_on_node);
