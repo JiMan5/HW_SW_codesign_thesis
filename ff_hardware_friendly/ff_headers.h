@@ -75,6 +75,12 @@ typedef struct {
 } Q_path;
 
 typedef struct {
+    int axis;
+    int steps;
+    int sign;
+} PathDisp;
+
+typedef struct {
   Real one_link;
   Real naik;
   Real three_staple;
@@ -185,6 +191,11 @@ void su3_adjoint( su3_matrix *a, su3_matrix *b );
 void uncompress_anti_hermitian( const anti_hermitmat * const mat_antihermit, su3_matrix *mat_su3 );
 void add_su3_matrix( su3_matrix *a, su3_matrix *b, su3_matrix *c );
 void make_anti_hermitian( su3_matrix *m3, anti_hermitmat *ah3 );
+
+//helpers for path directions and indexing///////////////////////
+
+static void compute_net_disp(const Q_path *path, int *axis_out, int *steps_out, int *sign_out);
+static inline int neighbor_index(int i, int dir);
 
 //fermion_force_hw.c
 void fermion_force_fn_multi_hw(Real eps, Real *residues, su3_vector **multi_x, int nterms, int prec, fermion_links_t *fl, su3_matrix *links, anti_hermitmat *mom, size_t sites_on_node);

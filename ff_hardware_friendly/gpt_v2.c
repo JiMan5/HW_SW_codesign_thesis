@@ -29,63 +29,6 @@
 #include <stdlib.h>
 #include "ff_headers.h"
 
-static inline int neighbor_index(int i, int dir)
-{
-    int x = i % NX;
-    int y = (i / NX) % NY;
-    int z = (i / (NX * NY)) % NZ;
-    int t = i / (NX * NY * NZ);
-
-    switch(dir)
-    {
-        case XUP:   x = (x + 1) % NX; break;
-        case XDOWN: x = (x + NX - 1) % NX; break;
-        case YUP:   y = (y + 1) % NY; break;
-        case YDOWN: y = (y + NY - 1) % NY; break;
-        case ZUP:   z = (z + 1) % NZ; break;
-        case ZDOWN: z = (z + NZ - 1) % NZ; break;
-        case TUP:   t = (t + 1) % NT; break;
-        case TDOWN: t = (t + NT - 1) % NT; break;
-        default: break;
-    }
-    return x + NX * (y + NY * (z + NZ * t));
-}
-
-/* compute net displacement for path: returns axis (0=X,1=Y,2=Z,3=T), steps>0 and sign (+1 forward, -1 backward).
-   If path net displacement is not purely along a single axis, returns axis=-1 and steps=0.
-   This mirrors the original find_backwards_gather logic but returns (axis,steps,sign) so the kernel can compute neighbor.
-*/
-static void compute_net_disp(const Q_path *path, int *axis_out, int *steps_out, int *sign_out) {
-    int disp[4] = {0,0,0,0};
-    for (int i = 0; i < path->length; ++i) {
-        int d = path->dir[i];
-        if (GOES_FORWARDS(d)) {
-            disp[d] += 1;
-        } else {
-            // map backward codes 4..7 to axes 0..3 via OPP_DIR
-            int opp = OPP_DIR(d);
-            disp[opp] -= 1;
-        }
-    }
-    // find the non-zero axis (assume only one axis non-zero in MILC's FN paths)
-    int axis = -1;
-    int steps = 0;
-    int sign = 0;
-    for (int a = 0; a < 4; ++a) {
-        if (disp[a] != 0) {
-            if (axis != -1) { axis = -1; steps = 0; sign = 0; break; } // more than one axis non-zero
-            axis = a;
-            steps = abs(disp[a]);
-            sign = (disp[a] > 0) ? +1 : -1;
-        }
-    }
-    if (axis == -1) {
-        *axis_out = -1; *steps_out = 0; *sign_out = 0;
-    } else {
-        *axis_out = axis; *steps_out = steps; *sign_out = sign;
-    }
-}
-
 // External helper; DO NOT IMPLEMENT HERE: provide single-node version separately.
 // void link_transport_connection(su3_matrix *src, su3_matrix *dest, su3_matrix *work, int dir);
 
