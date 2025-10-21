@@ -143,3 +143,4 @@ void fermion_force_fn_multi_hw_friendly(
         }
     }
 }
+

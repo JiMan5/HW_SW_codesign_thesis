@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "ff_headers.h"
 
 int main(void) {
@@ -13,9 +14,9 @@ int main(void) {
     int *axis = malloc(sizeof(int) * FORW_Q_PATHS); //for input pass (pio hw friendly)
     int *steps = malloc(sizeof(int) * FORW_Q_PATHS); //for input pass (pio hw friendly)
     int *sign = malloc(sizeof(int) * FORW_Q_PATHS); //for input pass (pio hw friendly)
-    su3_matrix **links = NULL;
-    anti_hermitmat **mom_main = NULL;
-    anti_hermitmat **mom_after_tb = NULL;
+    su3_matrix (*links)[4] = NULL;
+    anti_hermitmat (*mom_main)[4] = NULL;
+    anti_hermitmat (*mom_after_tb)[4] = NULL;
 
     printf("Loading binary inputs..\n\n");
 
@@ -52,6 +53,7 @@ int main(void) {
 
     //call the hw_friendly function
     fermion_force_fn_multi_hw_friendly(residues, multi_x, qpaths_forward, axis, steps, sign, links, mom_main);
+    printf("Finished with the hw_friendly call!\n");
 
 
         // Compare mom_main (computed) vs mom_after_tb (reference)
@@ -112,11 +114,6 @@ int main(void) {
     free(multi_x);
     free(q_paths);
     free(qpaths_forward);
-    for(size_t i=0; i<SITES_ON_NODE; i++) {
-        free(links[i]);
-        free(mom_main[i]);
-        free(mom_after_tb[i]);
-    }
     free(links);
     free(mom_main);
     free(mom_after_tb);

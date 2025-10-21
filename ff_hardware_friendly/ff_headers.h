@@ -7,7 +7,7 @@
 #define SITES_ON_NODE 131072UL
 #define NUM_Q_PATHS  688
 #define FORW_Q_PATHS 344
-#define MAX_PATH_LENGTH 7
+//#define MAX_PATH_LENGTH 7
 #define NX 16
 #define NY 16
 #define NZ 16
@@ -85,8 +85,10 @@ typedef struct {
 Real *read_residues(const char *fname);
 su3_vector **read_multi_x(const char *fname);
 Q_path *read_qpaths(const char *fname);
-su3_matrix **read_links(const char *fname);
-anti_hermitmat **read_mom(const char *fname);
+//su3_matrix **read_links(const char *fname);
+su3_matrix (*read_links(const char *fname))[4];
+//anti_hermitmat **read_mom(const char *fname);
+anti_hermitmat (*read_mom(const char *fname))[4];
 //void *read_lattice(const char *fname, size_t *sites_on_node, size_t site_size);
 
 //calculations
@@ -104,10 +106,20 @@ void make_anti_hermitian( su3_matrix *m3, anti_hermitmat *ah3 );
 //helpers for path directions and indexing///////////////////////
 
 void compute_net_disp(const Q_path *path, int *axis_out, int *steps_out, int *sign_out);
-int neighbor_index_disp(int i, int axis, int steps, int sign);
+int neighbor_index_axis(int i, int axis, int steps, int sign);
 
 //fermion_force_hw.c
-fermion_force_fn_multi_hw_friendly(residues, multi_x, qpaths_forward, axis, steps, sign, links, mom_before);
+void fermion_force_fn_multi_hw_friendly(
+    Real *residues,              
+    su3_vector **multi_x,         
+    Q_path *q_paths_forward,      
+    const int path_axis[FORW_Q_PATHS],
+    const int path_steps[FORW_Q_PATHS],
+    const int path_sign[FORW_Q_PATHS],
+    su3_matrix (*links)[4],       
+    anti_hermitmat (*mom)[4]      
+);
 
 //link_transport_connection
-void link_transport_connection(const su3_matrix *src, su3_matrix *dest, su3_matrix *work, int dir, su3_matrix (*links)[4]);
+//void link_transport_connection(const su3_matrix *src, su3_matrix *dest, su3_matrix *work, int dir, su3_matrix (*links)[4]);
+void link_transport_connection(su3_matrix *src, su3_matrix *dest, su3_matrix *work, int dir, su3_matrix (*links)[4]);

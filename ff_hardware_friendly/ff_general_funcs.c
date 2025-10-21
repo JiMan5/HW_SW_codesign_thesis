@@ -49,7 +49,27 @@ Q_path *read_qpaths(const char *fname) {
 }
 
 //links data
-su3_matrix **read_links(const char *fname) {
+su3_matrix (*read_links(const char *fname))[4] {
+    FILE *f = fopen(fname, "rb");
+    if (!f) { perror(fname); exit(1); }
+
+    size_t tmp_sites;
+    fread(&tmp_sites, sizeof(size_t), 1, f);
+    if (tmp_sites != SITES_ON_NODE) {
+        printf("Warning: expected %lu sites, file has %lu\n",
+               (unsigned long)SITES_ON_NODE, (unsigned long)tmp_sites);
+    }
+
+    su3_matrix (*links)[4] = malloc(SITES_ON_NODE * sizeof(*links));
+    fread(links, sizeof(su3_matrix), SITES_ON_NODE * 4, f);
+    fclose(f);
+
+    printf("read links (sites = %lu)\n", (unsigned long)SITES_ON_NODE);
+    return links;
+}
+
+
+/*su3_matrix **read_links(const char *fname) {
     FILE *f = fopen(fname, "rb");
     if(!f){ perror(fname); exit(1); }
     size_t tmp_sites;
@@ -66,11 +86,30 @@ su3_matrix **read_links(const char *fname) {
     fclose(f);
     printf("read links (sites = %lu)\n", (unsigned long)SITES_ON_NODE);
     return links;
-}
+}*/
 
 
 //momenta read
-anti_hermitmat **read_mom(const char *fname) {
+anti_hermitmat (*read_mom(const char *fname))[4] {
+    FILE *f = fopen(fname, "rb");
+    if (!f) { perror(fname); exit(1); }
+
+    size_t tmp_sites;
+    fread(&tmp_sites, sizeof(size_t), 1, f);
+    if (tmp_sites != SITES_ON_NODE) {
+        printf("Warning: expected %lu sites, file has %lu\n",
+               (unsigned long)SITES_ON_NODE, (unsigned long)tmp_sites);
+    }
+
+    anti_hermitmat (*mom)[4] = malloc(SITES_ON_NODE * sizeof(*mom));
+    fread(mom, sizeof(anti_hermitmat), SITES_ON_NODE * 4, f);
+    fclose(f);
+
+    printf("read mom (sites = %lu)\n", (unsigned long)SITES_ON_NODE);
+    return mom;
+}
+
+/*anti_hermitmat **read_mom(const char *fname) {
     FILE *f = fopen(fname, "rb");
     if(!f){ perror(fname); exit(1); }
     size_t tmp_sites;
@@ -87,7 +126,7 @@ anti_hermitmat **read_mom(const char *fname) {
     fclose(f);
     printf("read mom (sites = %lu)\n", (unsigned long)SITES_ON_NODE);
     return mom;
-}
+}*/
 
 /*
 void *read_lattice(const char *fname, size_t *sites_on_node, size_t site_size) {
@@ -292,7 +331,7 @@ int neighbor_index_axis(int i, int axis, int steps, int sign)
 }
 
 //link_transport_connection
-void link_transport_connection(const su3_matrix *src, su3_matrix *dest, su3_matrix *work, int dir, su3_matrix (*links)[4]){
+void link_transport_connection(su3_matrix *src, su3_matrix *dest, su3_matrix *work, int dir, su3_matrix (*links)[4]){
 
     if (GOES_FORWARDS(dir)) {
         //forw: dest[i] = U_dir(i) * src[i + dir]
