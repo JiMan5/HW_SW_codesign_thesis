@@ -4,31 +4,6 @@
 #include "ff_headers.h"
 
 
-//neighbor indexing algo
-static inline int neighbor_index(int i, int dir)
-{
-    int x = i % NX;
-    int y = (i / NX) % NY;
-    int z = (i / (NX * NY)) % NZ;
-    int t = i / (NX * NY * NZ);
-
-    switch(dir)
-    {
-        case XUP:   x = (x + 1) % NX; break;
-        case XDOWN: x = (x + NX - 1) % NX; break;
-        case YUP:   y = (y + 1) % NY; break;
-        case YDOWN: y = (y + NY - 1) % NY; break;
-        case ZUP:   z = (z + 1) % NZ; break;
-        case ZDOWN: z = (z + NZ - 1) % NZ; break;
-        case TUP:   t = (t + 1) % NT; break;
-        case TDOWN: t = (t + NT - 1) % NT; break;
-        default: break; // NODIR or invalid
-    }
-
-    return x + NX * (y + NY * (z + NZ * t));
-}
-
-
 void 
 fermion_force_fn_multi(
   Real *residues,

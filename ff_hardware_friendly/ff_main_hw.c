@@ -8,8 +8,11 @@ int main(void) {
     Real *residues = NULL;
     su3_vector **multi_x = NULL;
     Q_path *q_paths = NULL;
-    Q_path *qpaths_forward = malloc(sizeof(Q_path) * FORW_Q_PATHS); //only with forwback == 1    
+    Q_path *qpaths_forward = malloc(sizeof(Q_path) * FORW_Q_PATHS); //only with forwback == 1 
     PathDisp disp_table[FORW_Q_PATHS];
+    int *axis = malloc(sizeof(int) * FORW_Q_PATHS); //for input pass (pio hw friendly)
+    int *steps = malloc(sizeof(int) * FORW_Q_PATHS); //for input pass (pio hw friendly)
+    int *sign = malloc(sizeof(int) * FORW_Q_PATHS); //for input pass (pio hw friendly)
     su3_matrix **links = NULL;
     anti_hermitmat **mom_before = NULL;
 
@@ -23,14 +26,7 @@ int main(void) {
 
     printf("\nAll binary data loaded\n");
 
-
-    // Allocate filtered array
-    
-    if (!qpaths_forward) {
-        fprintf(stderr, "Error: failed to allocate qpaths_forward\n");
-        exit(1);
-    }
-
+    //input only the paths with forwback == 1
     int idx = 0;
     for (int i = 0; i < NUM_Q_PATHS; i++) {
         if (q_paths[i].forwback == 1) {
@@ -38,16 +34,21 @@ int main(void) {
         }
     }
 
+    //compute net disp and check for invalid paths (should be zero)
     int bad_paths = 0;
     for (int i = 0; i < FORW_Q_PATHS; i++) {
         compute_net_disp(&qpaths_forward[i], &disp_table[i].axis, &disp_table[i].steps, &disp_table[i].sign);
-
+        axis[i] = disp_table[i].axis;
+        steps[i] = disp_table[i].steps;
+        sign[i] = disp_table[i].sign;
         if (disp_table[i].axis == -1) {
             printf("Warning: Path %d has multi-axis displacement, skipping.\n", i);
             bad_paths++;
         }
     }
     printf("Total invalid paths: %d\n", bad_paths);
+
+    fermion_force_fn_multi_hw_friendly(residues, multi_x, qpaths_forward, axis, steps, sign, links, mom_before);
 
     free(residues);
     for(int t=0; t<NTERMS; t++) {

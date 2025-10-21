@@ -106,10 +106,13 @@ void *read_lattice(const char *fname, size_t *sites_on_node, size_t site_size) {
 
 //clear su3 matrix
 void clear_su3mat( su3_matrix *dest ){
-register int i,j;
-    for(i=0;i<3;i++)for(j=0;j<3;j++){
-	    dest->e[i][j].real = dest->e[i][j].imag = 0.0;
+    int i,j;
+    for(i=0; i<3; i++){
+        for(j=0; j<3; j++){
+	        dest->e[i][j].real = dest->e[i][j].imag = 0.0;
+        }
     }
+    
 }
 
 //projector

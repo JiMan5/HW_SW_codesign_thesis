@@ -36,6 +36,9 @@ void fermion_force_fn_multi_hw_friendly(
     Real *residues,               // size NTERMS
     su3_vector **multi_x,         // [NTERMS][SITES_ON_NODE]
     Q_path *q_paths_forward,      // [FORW_Q_PATHS] (only forward paths passed)
+    const int path_axis[FORW_Q_PATHS],
+    const int path_steps[FORW_Q_PATHS],
+    const int path_sign[FORW_Q_PATHS],
     su3_matrix (*links)[4],       // [SITES_ON_NODE][4]
     anti_hermitmat (*mom)[4]      // [SITES_ON_NODE][4] (packed)
 )
@@ -61,18 +64,14 @@ void fermion_force_fn_multi_hw_friendly(
     // 1) Loop over forward q_paths (assumed q_paths_forward length = FORW_Q_PATHS)
     for (int ipath = 0; ipath < FORW_Q_PATHS; ++ipath) {
         const Q_path *this_path = &q_paths_forward[ipath];
+        int axis  = path_axis[ipath];
+        int steps = path_steps[ipath];
+        int sign  = path_sign[ipath];
         int length = this_path->length;
-
-        // 1.a) compute net displacement (axis, steps, sign)
-        int axis, steps, sign;
-        compute_net_disp(this_path, &axis, &steps, &sign);
-        // If axis == -1 then path net displacement is not a single-axis simple displacement.
-        // In MILC find_backwards_gather would have exited; here we require axis != -1.
-        if (axis == -1) {
-            // fallback: skip (should not happen for FN paths produced by MILC)
-            continue;
+        
+        for (size_t i = 0; i < SITES_ON_NODE; ++i) {
+            clear_su3mat(&oprod_along_path[0][i]);
         }
-
         // Determine direction code to step *from end to start*:
         // If net disp sign>0 (path moves forward), the gather should follow the opposite direction (down)
         int axis_up = axis; // 0->XUP,1->YUP,2->ZUP,3->TUP
@@ -84,20 +83,14 @@ void fermion_force_fn_multi_hw_friendly(
         // oprod_along_path[0][i] = sum_term residues[term] * projector(multi_x[term][i], multi_x[term][startSite])
         // where startSite is the site at distance 'steps' along gather_dir from i
         // compute startSite by stepping `steps` times in gather_dir from i
-        for (size_t i = 0; i < SITES_ON_NODE; ++i) {
-            clear_su3mat(&oprod_along_path[0][i]);
+        
+      for (int term = 0; term < NTERMS; term++) {
+        for (size_t i = 0; i < SITES_ON_NODE; i++) {
+            int nbr = neighbor_index((int)i, axis, steps * sign);
+            su3_projector(&multi_x[term][i], &multi_x[term][nbr], &tmat);
+            scalar_mult_add_su3_matrix(&oprod_along_path[0][i], &tmat, residues[term], &oprod_along_path[0][i]);
         }
-        for (int term = 0; term < NTERMS; ++term) {
-            for (size_t i = 0; i < SITES_ON_NODE; ++i) {
-                int nbr = (int)i;
-                for (int s = 0; s < steps; ++s) {
-                    nbr = neighbor_index(nbr, gather_dir);
-                }
-                // projector: produces an su3_matrix from two vectors
-                su3_projector(&multi_x[term][i], &multi_x[term][nbr], &tmat);
-                scalar_mult_add_su3_matrix(&oprod_along_path[0][i], &tmat, residues[term], &oprod_along_path[0][i]);
-            }
-        }
+    }
 
         // 1.c) Compute transported outer-products along path:
         // We'll compute oprod_along_path[m] for m=1..length (transported backwards along path)
