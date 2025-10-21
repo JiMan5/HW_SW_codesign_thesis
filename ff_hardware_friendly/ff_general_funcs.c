@@ -290,3 +290,27 @@ int neighbor_index_axis(int i, int axis, int steps, int sign)
 
     return x + NX * (y + NY * (z + NZ * t));
 }
+
+//link_transport_connection
+void link_transport_connection(const su3_matrix *src, su3_matrix *dest, su3_matrix *work, int dir, su3_matrix (*links)[4]){
+
+    if (GOES_FORWARDS(dir)) {
+        //forw: dest[i] = U_dir(i) * src[i + dir]
+        for (size_t i = 0; i < SITES_ON_NODE; ++i) {
+            int nbr = neighbor_index_axis((int)i, dir, 1, +1);   // i + 1 along axis
+            mult_su3_nn(&links[i][dir], &src[nbr], &dest[i]);
+        }
+    } 
+    else {
+        //backwards movement has two steps
+        //step 1: work[i]
+        for (size_t i = 0; i < SITES_ON_NODE; ++i) {
+            mult_su3_an(&links[i][OPP_DIR(dir)], &src[i], &work[i]);
+        }
+        //step 2: dest[i] = work[i - 1 along axis]  (i + (-1) step)
+        for (size_t i = 0; i < SITES_ON_NODE; ++i) {
+            int nbr = neighbor_index_axis((int)i, OPP_DIR(dir), 1, -1);  // i - 1 along axis
+            dest[i] = work[nbr];
+        }
+    }
+}
