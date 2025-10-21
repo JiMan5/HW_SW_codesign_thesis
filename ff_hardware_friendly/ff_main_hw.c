@@ -48,7 +48,8 @@ int main(void) {
     }
     printf("Total invalid paths: %d\n", bad_paths);
 
-    fermion_force_fn_multi_hw_friendly(residues, multi_x, qpaths_forward, axis, steps, sign, links, mom_before);
+    //call the hw_friendly function
+    //fermion_force_fn_multi_hw_friendly(residues, multi_x, qpaths_forward, axis, steps, sign, links, mom_before);
 
     free(residues);
     for(int t=0; t<NTERMS; t++) {

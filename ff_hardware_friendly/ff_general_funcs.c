@@ -271,24 +271,22 @@ void compute_net_disp(const Q_path *path, int *axis_out, int *steps_out, int *si
 }
 
 //index
-int neighbor_index(int i, int dir)
+int neighbor_index_axis(int i, int axis, int steps, int sign)
 {
     int x = i % NX;
     int y = (i / NX) % NY;
     int z = (i / (NX * NY)) % NZ;
     int t = i / (NX * NY * NZ);
 
-    switch(dir)
+    int step = steps * sign;
+
+    switch(axis)
     {
-        case XUP:   x = (x + 1) % NX; break;
-        case XDOWN: x = (x + NX - 1) % NX; break;
-        case YUP:   y = (y + 1) % NY; break;
-        case YDOWN: y = (y + NY - 1) % NY; break;
-        case ZUP:   z = (z + 1) % NZ; break;
-        case ZDOWN: z = (z + NZ - 1) % NZ; break;
-        case TUP:   t = (t + 1) % NT; break;
-        case TDOWN: t = (t + NT - 1) % NT; break;
-        default: break;
+        case 0: x = (x + step + NX) % NX; break;
+        case 1: y = (y + step + NY) % NY; break;
+        case 2: z = (z + step + NZ) % NZ; break;
+        case 3: t = (t + step + NT) % NT; break;
     }
+
     return x + NX * (y + NY * (z + NZ * t));
 }

@@ -7,6 +7,7 @@
 #define SITES_ON_NODE 131072UL
 #define NUM_Q_PATHS  688
 #define FORW_Q_PATHS 344
+#define MAX_PATH_LENGTH 7
 #define NX 16
 #define NY 16
 #define NZ 16
@@ -195,7 +196,7 @@ void make_anti_hermitian( su3_matrix *m3, anti_hermitmat *ah3 );
 //helpers for path directions and indexing///////////////////////
 
 void compute_net_disp(const Q_path *path, int *axis_out, int *steps_out, int *sign_out);
-int neighbor_index(int i, int dir);
+int neighbor_index_disp(int i, int axis, int steps, int sign);
 
 //fermion_force_hw.c
 void fermion_force_fn_multi_hw(Real eps, Real *residues, su3_vector **multi_x, int nterms, int prec, fermion_links_t *fl, su3_matrix *links, anti_hermitmat *mom, size_t sites_on_node);
