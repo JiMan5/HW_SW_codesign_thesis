@@ -95,16 +95,26 @@ anti_hermitmat (*read_mom(const char *fname))[4] {
     if (!f) { perror(fname); exit(1); }
 
     size_t tmp_sites;
-    fread(&tmp_sites, sizeof(size_t), 1, f);
+    if (fread(&tmp_sites, sizeof(size_t), 1, f) != 1) { perror("read_mom header"); exit(1); }
     if (tmp_sites != SITES_ON_NODE) {
         printf("Warning: expected %lu sites, file has %lu\n",
                (unsigned long)SITES_ON_NODE, (unsigned long)tmp_sites);
     }
 
     anti_hermitmat (*mom)[4] = malloc(SITES_ON_NODE * sizeof(*mom));
-    fread(mom, sizeof(anti_hermitmat), SITES_ON_NODE * 4, f);
-    fclose(f);
+    if (!mom) { perror("malloc mom"); exit(1); }
 
+    // File is dir-major: [dir0][all sites], [dir1][all sites], ...
+    for (int dir = XUP; dir <= TUP; ++dir) {
+        for (size_t i = 0; i < SITES_ON_NODE; ++i) {
+            if (fread(&mom[i][dir], sizeof(anti_hermitmat), 1, f) != 1) {
+                perror("read_mom data");
+                exit(1);
+            }
+        }
+    }
+
+    fclose(f);
     printf("read mom (sites = %lu)\n", (unsigned long)SITES_ON_NODE);
     return mom;
 }
