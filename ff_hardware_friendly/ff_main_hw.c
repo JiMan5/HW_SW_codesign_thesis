@@ -38,7 +38,7 @@ int main(void) {
     }
 
     //compute net disp and check for invalid paths (should be zero)
-    int bad_paths = 0;
+    /*int bad_paths = 0;
     for (int i = 0; i < FORW_Q_PATHS; i++) {
         compute_net_disp(&qpaths_forward[i], &disp_table[i].axis, &disp_table[i].steps, &disp_table[i].sign);
         axis[i] = disp_table[i].axis;
@@ -49,9 +49,21 @@ int main(void) {
             bad_paths++;
         }
     }
-    printf("Total invalid paths: %d\n", bad_paths);
+    printf("Total invalid paths: %d\n", bad_paths);*/
 
+    for (int i = 0; i < 1000 && i < SITES_ON_NODE; ++i){
+        int x,y,z,t; coords_from_site_index(i,&x,&y,&z,&t);
+        int i2 = site_index_from_coords(x,y,z,t);
+        if (i2 != i) { printf("RT fail: i=%d -> (%d,%d,%d,%d) -> %d\n", i,x,y,z,t,i2); break; }
+    }
 
+    for (int i = 0; i < 1000 && i < SITES_ON_NODE; ++i){
+        int x,y,z,t; coords_from_site_index(i,&x,&y,&z,&t);
+        int p = (x+y+z+t) & 1;
+        int block = (i < (SITES_ON_NODE/2)) ? 0 : 1;
+        if (p != block) { printf("Parity mismatch at i=%d\n", i); break; }
+    }
+    /*
     //call the hw_friendly function
     fermion_force_fn_multi_hw_friendly(residues, multi_x, qpaths_forward, axis, steps, sign, links, mom_main);
     printf("Finished with the hw_friendly call!\n");
@@ -103,7 +115,7 @@ int main(void) {
     if (rms_diff < tol)
         printf("Result matches reference within tolerance (%.1e)\n", tol);
     else
-        printf("WARNING: Difference exceeds tolerance (%.1e)\n", tol);
+        printf("WARNING: Difference exceeds tolerance (%.1e)\n", tol);*/
 
 
 

@@ -49,6 +49,13 @@ void make_lattice(){
       lattice[i].index = x+nx*(y+ny*(z+nz*t));
       if( (x+y+z+t)%2 == 0)lattice[i].parity=EVEN;
       else	         lattice[i].parity=ODD;
+      
+      #ifdef DEBUG_PARITY_CHECK
+      printf("mem_index=%d  coords=(%d,%d,%d,%d)  lex=%d  parity=%d\n",
+            i, x, y, z, t,
+            lattice[i].index,
+            lattice[i].parity);
+      #endif
     }
   }
 #ifdef SITERAND

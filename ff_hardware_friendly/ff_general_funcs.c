@@ -119,37 +119,6 @@ anti_hermitmat (*read_mom(const char *fname))[4] {
     return mom;
 }
 
-/*anti_hermitmat **read_mom(const char *fname) {
-    FILE *f = fopen(fname, "rb");
-    if(!f){ perror(fname); exit(1); }
-    size_t tmp_sites;
-    fread(&tmp_sites, sizeof(size_t), 1, f);
-    if(tmp_sites != SITES_ON_NODE) {
-        printf("Warning: expected %lu sites, file has %lu\n",
-               (unsigned long)SITES_ON_NODE, (unsigned long)tmp_sites);
-    }
-    anti_hermitmat **mom = malloc(sizeof(anti_hermitmat*) * SITES_ON_NODE);
-    for(size_t i = 0; i < SITES_ON_NODE; i++) {
-        mom[i] = malloc(sizeof(anti_hermitmat) * 4); // 4 directions
-        fread(mom[i], sizeof(anti_hermitmat), 4, f);
-    }
-    fclose(f);
-    printf("read mom (sites = %lu)\n", (unsigned long)SITES_ON_NODE);
-    return mom;
-}*/
-
-/*
-void *read_lattice(const char *fname, size_t *sites_on_node, size_t site_size) {
-    FILE *f = fopen(fname, "rb");
-    if(!f){ perror(fname); exit(1); }
-    fread(sites_on_node, sizeof(size_t), 1, f);
-    void *lat = malloc(site_size * (*sites_on_node));
-    fread(lat, site_size, *sites_on_node, f);
-    fclose(f);
-    return lat;
-}
-*/
-
 /////////////////////////////////////////
 // small funcs used for calculations
 
@@ -167,18 +136,22 @@ void clear_su3mat( su3_matrix *dest ){
 //projector
 void su3_projector( su3_vector *a, su3_vector *b, su3_matrix *c ){
     int i,j;
-    for(i=0;i<3;i++)for(j=0;j<3;j++){
-	    CMUL_J( a->c[i], b->c[j], c->e[i][j] );
-    }
+    for(i=0;i<3;i++){
+        for(j=0;j<3;j++){
+	        CMUL_J( a->c[i], b->c[j], c->e[i][j] );
+        }
+    }   
 }
 
 //scalar multiply add su3 matrix
 void scalar_mult_add_su3_matrix(su3_matrix *a,su3_matrix *b,Real s,
 	su3_matrix *c){
     int i,j;
-    for(i=0;i<3;i++)for(j=0;j<3;j++){
-        c->e[i][j].real = a->e[i][j].real + s*b->e[i][j].real;
-        c->e[i][j].imag = a->e[i][j].imag + s*b->e[i][j].imag;
+    for(i=0;i<3;i++){
+        for(j=0;j<3;j++){
+            c->e[i][j].real = a->e[i][j].real + s*b->e[i][j].real;
+            c->e[i][j].imag = a->e[i][j].imag + s*b->e[i][j].imag;
+        }
     }
 }
 
@@ -186,13 +159,15 @@ void scalar_mult_add_su3_matrix(su3_matrix *a,su3_matrix *b,Real s,
 void mult_su3_nn( su3_matrix *a, su3_matrix *b, su3_matrix *c ){
     int i,j,k;
     fcomplex x,y;
-    for(i=0;i<3;i++)for(j=0;j<3;j++){
-	    x.real=x.imag=0.0;
-	    for(k=0;k<3;k++){
-	        CMUL( a->e[i][k] , b->e[k][j] , y );
-	        CSUM( x , y );
-	    }
-	    c->e[i][j] = x;
+    for(i=0;i<3;i++){
+        for(j=0;j<3;j++){
+	        x.real=x.imag=0.0;
+	        for(k=0;k<3;k++){
+	            CMUL( a->e[i][k] , b->e[k][j] , y );
+	            CSUM( x , y );
+	        }
+	        c->e[i][j] = x;
+        }
     }
 }
 
@@ -200,13 +175,15 @@ void mult_su3_nn( su3_matrix *a, su3_matrix *b, su3_matrix *c ){
 void mult_su3_na(  su3_matrix *a, su3_matrix *b, su3_matrix *c ){
     int i,j,k;
     fcomplex x,y;
-    for(i=0;i<3;i++)for(j=0;j<3;j++){
-	    x.real=x.imag=0.0;
-	    for(k=0;k<3;k++){
-	        CMUL_J( a->e[i][k] , b->e[j][k] , y );
-	        CSUM( x , y );
-	    }   
-	    c->e[i][j] = x;
+    for(i=0;i<3;i++){
+        for(j=0;j<3;j++){
+	        x.real=x.imag=0.0;
+	        for(k=0;k<3;k++){
+	            CMUL_J( a->e[i][k] , b->e[j][k] , y );
+	            CSUM( x , y );
+	        }   
+	        c->e[i][j] = x;
+        }
     }
 }
 
@@ -214,21 +191,25 @@ void mult_su3_na(  su3_matrix *a, su3_matrix *b, su3_matrix *c ){
 void mult_su3_an( su3_matrix *a, su3_matrix *b, su3_matrix *c ){
     int i,j,k;
     fcomplex x,y;
-    for(i=0;i<3;i++)for(j=0;j<3;j++){
-	    x.real=x.imag=0.0;
-	    for(k=0;k<3;k++){
-	        CMULJ_( a->e[k][i] , b->e[k][j], y );
-	        CSUM( x , y );
-	    }
-	    c->e[i][j] = x;
+    for(i=0;i<3;i++){
+        for(j=0;j<3;j++){
+	        x.real=x.imag=0.0;
+	        for(k=0;k<3;k++){
+	            CMULJ_( a->e[k][i] , b->e[k][j], y );
+	            CSUM( x , y );
+	        }
+	        c->e[i][j] = x;
+        }
     }
 }
 
 //adjoint of a matrix
 void su3_adjoint( su3_matrix *a, su3_matrix *b ){
     int i,j;
-    for(i=0;i<3;i++)for(j=0;j<3;j++){
-	    CONJG( a->e[j][i], b->e[i][j] );
+    for(i=0;i<3;i++){
+        for(j=0;j<3;j++){
+	        CONJG( a->e[j][i], b->e[i][j] );
+        }
     }
 }
 
@@ -262,8 +243,10 @@ void uncompress_anti_hermitian( const anti_hermitmat * const mat_antihermit,
 //adds two su3 matrices
 void add_su3_matrix( su3_matrix *a, su3_matrix *b, su3_matrix *c ) {
     int i,j;
-    for(i=0;i<3;i++)for(j=0;j<3;j++){
-	    CADD( a->e[i][j], b->e[i][j], c->e[i][j] );
+    for(i=0;i<3;i++){
+        for(j=0;j<3;j++){
+	        CADD( a->e[i][j], b->e[i][j], c->e[i][j] );
+        }
     }
 }
 
@@ -285,63 +268,50 @@ void make_anti_hermitian( su3_matrix *m3, anti_hermitmat *ah3 ) {
 }/* make_anti_hermitian */
 
 
-//helpers for path directions and indexing///////////////////////
+///////////helpers for path directions and indexing///////////////////////
 
-//net displacement
-void compute_net_disp(const Q_path *path, int *axis_out, int *steps_out, int *sign_out) {
-    int disp[4] = {0,0,0,0};
-    for (int i = 0; i < path->length; ++i) {
-        int d = path->dir[i];
-        if (GOES_FORWARDS(d)) {
-            disp[d] += 1;
-        } else {
-            // map backward codes 4..7 to axes 0..3 via OPP_DIR
-            int opp = OPP_DIR(d);
-            disp[opp] -= 1;
-        }
-    }
-    // find the non-zero axis (assume only one axis non-zero in MILC's FN paths)
-    int axis = -1;
-    int steps = 0;
-    int sign = 0;
-    for (int a = 0; a < 4; ++a) {
-        if (disp[a] != 0) {
-            if (axis != -1) { axis = -1; steps = 0; sign = 0; break; } // more than one axis non-zero
-            axis = a;
-            steps = abs(disp[a]);
-            sign = (disp[a] > 0) ? +1 : -1;
-        }
-    }
-    if (axis == -1) {
-        *axis_out = -1; *steps_out = 0; *sign_out = 0;
-    } else {
-        *axis_out = axis; *steps_out = steps; *sign_out = sign;
-    }
+//simple parity toy site
+int coord_parity(int x,int y,int z,int t){
+    return (x + y + z + t) & 1;
 }
 
-//index
-int neighbor_index_axis(int i, int axis, int steps, int sign)
-{
-    int x = i % NX;
-    int y = (i / NX) % NY;
-    int z = (i / (NX * NY)) % NZ;
-    int t = i / (NX * NY * NZ);
-
-    int step = steps * sign;
-
-    switch(axis)
-    {
-        case 0: x = (x + step + NX) % NX; break;
-        case 1: y = (y + step + NY) % NY; break;
-        case 2: z = (z + step + NZ) % NZ; break;
-        case 3: t = (t + step + NT) % NT; break;
-    }
-
-    return x + NX * (y + NY * (z + NZ * t));
+//correct index from coords
+int site_index_from_coords(int x,int y,int z,int t){
+    int i_lex = x + NX*(y + NY*(z + NZ*t)); //from milc code I know it's x-fastest BUT in memory EVEN are stored first and then ODD.
+    if (coord_parity(x,y,z,t) == 0)
+        return i_lex >> 1; //even, ara srl ki exw i_lex / 2
+    else                                       
+        return (i_lex + SITES_ON_NODE) >> 1; //odd, ara srl ki exw (i_lex + N) / 2
 }
+
+//opposite but with correct EVEN, ODD assumptions
+void coords_from_site_index(int idx,int* x,int* y,int* z,int* t){
+    const int neven = SITES_ON_NODE / 2; //thewrw this block
+    int block_par = (idx < neven) ? 0 : 1; //0=even block, 1=odd block
+    int ir = (idx < neven) ? (idx << 1) : ((idx - neven) << 1);  //sll 2*pos
+
+    int tt = ir / (NX*NY*NZ);
+    int rem = ir - tt*(NX*NY*NZ);
+    int zz = rem / (NX*NY);
+    rem -= zz*(NX*NY);
+    int yy = rem / NX;
+    int xx = rem - yy*NX;
+
+    //ensure coords parity matches the block parity
+    if (((xx + yy + zz + tt) & 1) != block_par){
+        xx++;
+        if (xx >= NX){ xx = 0; yy++; }
+        if (yy >= NY){ yy = 0; zz++; }
+        if (zz >= NZ){ zz = 0; tt++; }
+    }
+    *x=xx; *y=yy; *z=zz; *t=tt;
+}
+
+/////////////////////////////////////////////////////////////////////////
+
 
 //link_transport_connection
-void link_transport_connection(su3_matrix *src, su3_matrix *dest, su3_matrix *work, int dir, su3_matrix (*links)[4]){
+/*void link_transport_connection(su3_matrix *src, su3_matrix *dest, su3_matrix *work, int dir, su3_matrix (*links)[4]){
 
     if (GOES_FORWARDS(dir)) {
         //forw: dest[i] = U_dir(i) * src[i + dir]
@@ -362,4 +332,4 @@ void link_transport_connection(su3_matrix *src, su3_matrix *dest, su3_matrix *wo
             dest[i] = work[nbr];
         }
     }
-}
+}*/
