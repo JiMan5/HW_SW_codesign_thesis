@@ -7,8 +7,8 @@ CFLAGS = -O3 -g -std=c99 -Wall -Wno-unused-variable -Wno-unused-but-set-variable
 -DFEWSUMS -DD_FN_GATHER13 -DKS_MULTICG=HYBRID -DKS_MULTIFF=FNMAT \
 -DMILC_CODE_VERSION="\"6be2\"" -DC_GLOBAL_INLINE -DMILC_PRECISION=1 \
 -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -DMAX_MIXED -DFN -DHMC -DINT_ALG=INT_OMELYAN \
--I. -I../include -I/opt/intel/oneapi/vtune/2025.1/include \
--DDEBUG_PARITY_CHECK
+-I. -I../include -I/opt/intel/oneapi/vtune/2025.1/include
+#-DDEBUG_PARITY_CHECK
 
 CFLAGS += -MD
 

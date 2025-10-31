@@ -220,6 +220,9 @@ fermion_force_fn_multi( Real eps, Real *residues,
     sort_quark_paths( q_paths, q_paths_sorted, num_q_paths );
     for( ipath=0; ipath<num_q_paths; ipath++ )
 	netbackdir_table[ipath] = find_backwards_gather( &(q_paths_sorted[ipath]) );
+  for( ipath=0; ipath<num_q_paths; ipath++ ){
+    printf("netbackdir[%d] = %d\n", ipath, netbackdir_table[ipath]);
+  }
     first_force=0;
   }
 

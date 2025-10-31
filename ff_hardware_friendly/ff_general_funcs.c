@@ -285,26 +285,26 @@ int site_index_from_coords(int x,int y,int z,int t){
 }
 
 //opposite but with correct EVEN, ODD assumptions
-void coords_from_site_index(int idx,int* x,int* y,int* z,int* t){
-    const int neven = SITES_ON_NODE / 2; //thewrw this block
-    int block_par = (idx < neven) ? 0 : 1; //0=even block, 1=odd block
-    int ir = (idx < neven) ? (idx << 1) : ((idx - neven) << 1);  //sll 2*pos
+void coords_from_site_index(int idx, int *x, int *y, int *z, int *t){
+    int neven = SITES_ON_NODE / 2;
+    int lex;
 
-    int tt = ir / (NX*NY*NZ);
-    int rem = ir - tt*(NX*NY*NZ);
-    int zz = rem / (NX*NY);
-    rem -= zz*(NX*NY);
-    int yy = rem / NX;
-    int xx = rem - yy*NX;
-
-    //ensure coords parity matches the block parity
-    if (((xx + yy + zz + tt) & 1) != block_par){
-        xx++;
-        if (xx >= NX){ xx = 0; yy++; }
-        if (yy >= NY){ yy = 0; zz++; }
-        if (zz >= NZ){ zz = 0; tt++; }
+    if (idx < neven) {
+        //this idx belongs to the EVEN block
+        lex = idx * 2;
+    } 
+    else {
+        //odd block starts at neven
+        lex = (idx - neven) * 2 + 1;
     }
-    *x=xx; *y=yy; *z=zz; *t=tt;
+
+    // convert lex back to coords
+    *t = lex / (NX * NY * NZ);
+    lex -= (*t) * (NX * NY * NZ);
+    *z = lex / (NX * NY);
+    lex -= (*z) * (NX * NY);
+    *y = lex / NX;
+    *x = lex - (*y) * NX;
 }
 
 /////////////////////////////////////////////////////////////////////////

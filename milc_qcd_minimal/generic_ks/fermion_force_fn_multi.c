@@ -129,7 +129,7 @@ fermion_force_fn_multi( Real eps, Real *residues,
   /* node0_printf("STARTING fermion_force_fn_multi() nterms = %d\n",nterms); */
   if( nterms==0 )return;
 
-  if(!ff_first_call_logged) {
+  /*if(!ff_first_call_logged) {
     FILE *f;
 
     // Scalar parameters
@@ -182,7 +182,7 @@ fermion_force_fn_multi( Real eps, Real *residues,
     fprintf(f,"nterms %d\n", nterms);
     fprintf(f,"num_q_paths %d\n", num_q_paths_loc);
     fclose(f);
-  } 
+  } */
 
   for(i=0;i<=MAX_PATH_LENGTH;i++){
      oprod_along_path[i] = (su3_matrix *) malloc(sites_on_node*sizeof(su3_matrix) );
@@ -208,6 +208,7 @@ fermion_force_fn_multi( Real eps, Real *residues,
     sort_quark_paths( q_paths, q_paths_sorted, num_q_paths );
     for( ipath=0; ipath<num_q_paths; ipath++ )
 	netbackdir_table[ipath] = find_backwards_gather( &(q_paths_sorted[ipath]) );
+    printf("=== PATH AXIS CHECK ===\n");
     first_force=0;
   }
 
