@@ -104,9 +104,9 @@ void add_su3_matrix( su3_matrix *a, su3_matrix *b, su3_matrix *c );
 void make_anti_hermitian( su3_matrix *m3, anti_hermitmat *ah3 );
 
 //helpers for path directions and indexing///////////////////////
-int coord_parity(int x,int y,int z,int t);
-int site_index_from_coords(int x,int y,int z,int t);
-void coords_from_site_index(int idx,int* x,int* y,int* z,int* t);
+int site_index_from_coords(int x, int y, int z, int t);
+void coords_from_site_index(int idx, int *x, int *y, int *z, int *t);
+int walk_path(int start_idx, const Q_path *path);
 
 //fermion_force_hw.c
 void fermion_force_fn_multi_hw_friendly(

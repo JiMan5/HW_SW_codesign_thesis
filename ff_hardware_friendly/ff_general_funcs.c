@@ -270,41 +270,65 @@ void make_anti_hermitian( su3_matrix *m3, anti_hermitmat *ah3 ) {
 
 ///////////helpers for path directions and indexing///////////////////////
 
-//simple parity toy site
-int coord_parity(int x,int y,int z,int t){
-    return (x + y + z + t) & 1;
-}
+//returns memory index of a given (x,y,z,t) coordinate
+int site_index_from_coords(int x, int y, int z, int t)
+{
+    int ir = x + NX*(y + NY*(z + NZ*t));       // lexicographic, x-fastest
 
-//correct index from coords
-int site_index_from_coords(int x,int y,int z,int t){
-    int i_lex = x + NX*(y + NY*(z + NZ*t)); //from milc code I know it's x-fastest BUT in memory EVEN are stored first and then ODD.
-    if (coord_parity(x,y,z,t) == 0)
-        return i_lex >> 1; //even, ara srl ki exw i_lex / 2
-    else                                       
-        return (i_lex + SITES_ON_NODE) >> 1; //odd, ara srl ki exw (i_lex + N) / 2
+    int parity = (x + y + z + t) & 1;          // 0 = EVEN, 1 = ODD
+
+    if(parity == 0)
+        return ir >> 1;                        // EVEN block: ir/2
+    else
+        return (ir + SITES_ON_NODE) >> 1;      // ODD block: (ir+N)/2
 }
 
 //opposite but with correct EVEN, ODD assumptions
-void coords_from_site_index(int idx, int *x, int *y, int *z, int *t){
-    int neven = SITES_ON_NODE / 2;
+void coords_from_site_index(int idx, int *x, int *y, int *z, int *t)
+{
+    const int neven = SITES_ON_NODE / 2;
     int lex;
 
-    if (idx < neven) {
-        //this idx belongs to the EVEN block
-        lex = idx * 2;
-    } 
-    else {
-        //odd block starts at neven
-        lex = (idx - neven) * 2 + 1;
-    }
+    int expected_parity = (idx < neven) ? 0 : 1;
 
-    // convert lex back to coords
+    if (idx < neven)
+        lex = idx * 2;           //even block
+    else
+        lex = (idx - neven) * 2 + 1;  //odd block
+
+    //decode
     *t = lex / (NX * NY * NZ);
     lex -= (*t) * (NX * NY * NZ);
+
     *z = lex / (NX * NY);
     lex -= (*z) * (NX * NY);
+
     *y = lex / NX;
     *x = lex - (*y) * NX;
+}
+
+int walk_path(int start_idx, const Q_path *path)
+{
+    int x, y, z, t;
+    coords_from_site_index(start_idx, &x, &y, &z, &t);
+
+    for (int step = 0; step < path->length; step++) {
+        int d = path->dir[step];
+
+        switch (d) {
+            case XUP: x = (x + 1) % NX; break;
+            case YUP: y = (y + 1) % NY; break;
+            case ZUP: z = (z + 1) % NZ; break;
+            case TUP: t = (t + 1) % NT; break;
+
+            case XDOWN: x = (x + NX - 1) % NX; break;
+            case YDOWN: y = (y + NY - 1) % NY; break;
+            case ZDOWN: z = (z + NZ - 1) % NZ; break;
+            case TDOWN: t = (t + NT - 1) % NT; break;
+        }
+    }
+
+    return site_index_from_coords(x, y, z, t);
 }
 
 /////////////////////////////////////////////////////////////////////////

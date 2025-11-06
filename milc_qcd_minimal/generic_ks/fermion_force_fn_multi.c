@@ -36,6 +36,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stddef.h>   // for ptrdiff_t
+
 
 
 /* All routines in this file require the FN flag */
@@ -45,6 +47,17 @@ BOMB THE COMPILE
 
 #define GOES_FORWARDS(dir) (dir<=TUP)
 #define GOES_BACKWARDS(dir) (dir>TUP)
+//fixed consts for run
+#define EPS          0.010000f
+#define NTERMS       8
+#define SITES_ON_NODE 131072UL
+#define NUM_Q_PATHS  688
+#define FORW_Q_PATHS 344
+//#define MAX_PATH_LENGTH 7
+#define NX 16
+#define NY 16
+#define NZ 16
+#define NT 32
 
 #ifdef QCDOC
 #define special_alloc qcdoc_alloc
@@ -80,6 +93,95 @@ find_backwards_gather( Q_path *path );
 static int first_force=1;	// 1 if force hasn't been called yet
 
 static int ff_first_call_logged = 0;
+
+//TESTING BEGIN
+int site_index_from_coords(int x, int y, int z, int t)
+{
+    int ir = x + NX*(y + NY*(z + NZ*t));       // lexicographic, x-fastest
+
+    int parity = (x + y + z + t) & 1;          // 0 = EVEN, 1 = ODD
+
+    if(parity == 0)
+        return ir >> 1;                        // EVEN block: ir/2
+    else
+        return (ir + SITES_ON_NODE) >> 1;      // ODD block: (ir+N)/2
+}
+
+//opposite but with correct EVEN, ODD assumptions
+void coords_from_site_index(int idx, int *x, int *y, int *z, int *t)
+{
+    const int neven = SITES_ON_NODE / 2;
+    int lex;
+
+    int expected_parity = (idx < neven) ? 0 : 1;
+
+    if (idx < neven)
+        lex = idx * 2;           //even block
+    else
+        lex = (idx - neven) * 2 + 1;  //odd block
+
+    //decode
+    *t = lex / (NX * NY * NZ);
+    lex -= (*t) * (NX * NY * NZ);
+
+    *z = lex / (NX * NY);
+    lex -= (*z) * (NX * NY);
+
+    *y = lex / NX;
+    *x = lex - (*y) * NX;
+
+    if (((*x + *y + *z + *t) & 1) != expected_parity) {
+        (*x)++;
+        if (*x >= NX) { *x = 0; (*y)++; }
+        if (*y >= NY) { *y = 0; (*z)++; }
+        if (*z >= NZ) { *z = 0; (*t)++; }
+    }
+}
+
+int walk_path(int start_idx, const Q_path *path)
+{
+    int x, y, z, t;
+    coords_from_site_index(start_idx, &x, &y, &z, &t);
+
+    for (int step = 0; step < path->length; step++) {
+        int d = path->dir[step];
+
+        switch (d) {
+            case XUP: x = (x + 1) % NX; break;
+            case YUP: y = (y + 1) % NY; break;
+            case ZUP: z = (z + 1) % NZ; break;
+            case TUP: t = (t + 1) % NT; break;
+
+            case XDOWN: x = (x + NX - 1) % NX; break;
+            case YDOWN: y = (y + NY - 1) % NY; break;
+            case ZDOWN: z = (z + NZ - 1) % NZ; break;
+            case TDOWN: t = (t + NT - 1) % NT; break;
+        }
+    }
+
+    return site_index_from_coords(x, y, z, t);
+}
+
+int walk_netbackdir(int start_idx, int netbackdir)
+{
+    int x,y,z,t;
+    coords_from_site_index(start_idx, &x, &y, &z, &t);
+
+    switch(netbackdir) {
+        case XUP:   x = (x + 1) % NX; break;
+        case XDOWN: x = (x - 1 + NX) % NX; break;
+        case YUP:   y = (y + 1) % NY; break;
+        case YDOWN: y = (y - 1 + NY) % NY; break;
+        case ZUP:   z = (z + 1) % NZ; break;
+        case ZDOWN: z = (z - 1 + NZ) % NZ; break;
+        case TUP:   t = (t + 1) % NT; break;
+        case TDOWN: t = (t - 1 + NT) % NT; break;
+    }
+
+    return site_index_from_coords(x,y,z,t);
+}
+
+//TESTING END
 
 static void write_all_mom(const char *fname) {
     FILE *f = fopen(fname, "wb");
@@ -240,6 +342,27 @@ fermion_force_fn_multi( Real eps, Real *residues,
           if(term<nterms-1)mtag[1-k] = start_gather_field( multi_x[term+1],
 		sizeof(su3_vector), netbackdir, EVENANDODD, gen_pt[1-k] );
           wait_gather(mtag[k]);
+         // ===== DEBUG START =====
+printf("PATH %d dirs: ", ipath);
+for(int j = 0; j < this_path->length; j++)
+    printf("%d ", this_path->dir[j]);
+printf("  | netbackdir = %d\n", netbackdir);
+
+for (int test_site = 0; test_site < 100; test_site++) {
+
+    su3_vector *ptr = (su3_vector *) gen_pt[k][test_site];
+    int real_idx = (ptr - multi_x[term]);   // MILC's true gathered index
+
+    int x,y,z,t;
+    int calc_idx = walk_netbackdir(test_site, netbackdir,  &x,&y,&z,&t);  // <-- FIXED
+
+    printf("site %-3d real=%-6d calc=%-6d  %s\n",
+           test_site, real_idx, calc_idx,
+           (real_idx == calc_idx ? "MATCH" : "MISMATCH"));
+}
+
+printf("\n");
+// ===== DEBUG END =====
           FORALLSITES(i,s){
 	    su3_projector( &multi_x[term][i], (su3_vector *)gen_pt[k][i], &tmat );
 	    scalar_mult_add_su3_matrix( &oprod_along_path[0][i], &tmat, residues[term], &oprod_along_path[0][i] );
