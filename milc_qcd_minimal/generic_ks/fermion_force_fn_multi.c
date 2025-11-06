@@ -227,8 +227,14 @@ fermion_force_fn_multi( Real eps, Real *residues,
     if(netbackdir_table==NULL ) netbackdir_table = (int *)malloc( num_q_paths*sizeof(int) );
     else{ node0_printf("WARNING: remaking sorted path table\n"); exit(0); }
     sort_quark_paths( q_paths, q_paths_sorted, num_q_paths );
-    for( ipath=0; ipath<num_q_paths; ipath++ )
-	netbackdir_table[ipath] = find_backwards_gather( &(q_paths_sorted[ipath]) );
+    for( ipath=0; ipath<num_q_paths; ipath++ ){
+      netbackdir_table[ipath] = find_backwards_gather( &(q_paths_sorted[ipath]) );
+      //TESTAKI BEGIN
+      this_path = &(q_paths_sorted[ipath]);
+      if(this_path->forwback== -1)continue;	/* skip backwards dslash */
+      else printf("i = %d, netbackdir = %d\n", ipath, netbackdir_table[ipath]);
+      //TESTAKI END
+    }
     printf("=== PATH AXIS CHECK ===\n");
     first_force=0;
   }

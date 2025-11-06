@@ -10,6 +10,7 @@ void dump_matrix_array(const char *fname, su3_matrix *arr) {
 }
 
 void fermion_force_fn_multi_hw_friendly(
+    int *netbackdirs_table,
     Real *residues,               //size NTERMS
     su3_vector **multi_x,         //[NTERMS][SITES_ON_NODE]
     Q_path *q_paths_forward,      //[FORW_Q_PATHS] (only forward paths)
@@ -38,8 +39,7 @@ void fermion_force_fn_multi_hw_friendly(
     for (int ipath = 0; ipath < FORW_Q_PATHS; ++ipath) {
         const Q_path *this_path = &q_paths_forward[ipath];
         int dir0  = this_path->dir[0]; //for first link of path later
-        int netbackdir = find_backwards_gather_hw(this_path);
-        printf("netbackdir = %d\n", netbackdir);
+        printf("ipath = %d, netbackdir = %d\n", ipath, netbackdirs_table[ipath]);
         int length = this_path->length;
         Real coeff = ferm_epsilon * this_path->coeff;
 
@@ -52,17 +52,18 @@ void fermion_force_fn_multi_hw_friendly(
         //loop over terms
         for (int term = 0; term < NTERMS; term++) {
             for (size_t i = 0; i < SITES_ON_NODE; i++) {
-                int nbr = walk_netbackdir((int)i, netbackdir);
+                int nbr = walk_netbackdir((int)i, netbackdirs_table[ipath]);
+                if(term == 0 && i<10) printf("nbr = %d\n", nbr);
                 su3_projector(&multi_x[term][i], &multi_x[term][nbr], &tmat);
                 scalar_mult_add_su3_matrix(&oprod_along_path[0][i], &tmat, residues[term], &oprod_along_path[0][i]);
             }
         }
 
         //debug dump
-        char fname[128];
+        /*char fname[128];
         snprintf(fname, sizeof(fname), "hw_oprod_path_%03d.bin", ipath);
         dump_matrix_array(fname, oprod_along_path[0]);
-        printf("Dumped oprod_along_path[0] for path %d\n", ipath);
+        printf("Dumped oprod_along_path[0] for path %d\n", ipath);*/
 
 
         /*

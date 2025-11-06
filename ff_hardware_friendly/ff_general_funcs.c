@@ -333,50 +333,69 @@ int walk_netbackdir(int start_idx, int netbackdir)
     return site_index_from_coords(x,y,z,t);
 }
 
-// hardware-friendly, constant loop bounds
+
 int find_backwards_gather_hw(const Q_path *path)
 {
-    int dx = 0, dy = 0, dz = 0, dt = 0;
-
-    for (int i = 0; i < MAX_PATH_LENGTH; i++) {
-
-        //skip path shorter than max length
-        int d = (i < path->length) ? path->dir[i] : -1;
-        if (d < 0) continue;
-
-        switch (d) {
-            case XUP:    dx++; break;
-            case XDOWN:  dx--; break;
-            case YUP:    dy++; break;
-            case YDOWN:  dy--; break;
-            case ZUP:    dz++; break;
-            case ZDOWN:  dz--; break;
-            case TUP:    dt++; break;
-            case TDOWN:  dt--; break;
-        }
+    int disp[4], i;
+    /* compute total displacement of path */
+    for(i=XUP;i<=TUP;i++)disp[i]=0;
+    for( i=0; i<path->length; i++){
+	if( GOES_FORWARDS(path->dir[i]) )
+	    disp[        path->dir[i]  ]++;
+	else
+	    disp[OPP_DIR(path->dir[i]) ]--;
     }
 
-    //net direction
-    if (dx == +1 && dy==0 && dz==0 && dt==0) return XDOWN;
-    if (dx == -1 && dy==0 && dz==0 && dt==0) return XUP;
-    if (dy == +1 && dx==0 && dz==0 && dt==0) return YDOWN;
-    if (dy == -1 && dx==0 && dz==0 && dt==0) return YUP;
-    if (dz == +1 && dx==0 && dy==0 && dt==0) return ZDOWN;
-    if (dz == -1 && dx==0 && dy==0 && dt==0) return ZUP;
-    if (dt == +1 && dx==0 && dy==0 && dz==0) return TDOWN;
-    if (dt == -1 && dx==0 && dy==0 && dz==0) return TUP;
+   // There must be an elegant way??
+   if( disp[XUP]==+1 && disp[YUP]== 0 && disp[ZUP]== 0 && disp[TUP]== 0 )return(XDOWN);
+   if( disp[XUP]==-1 && disp[YUP]== 0 && disp[ZUP]== 0 && disp[TUP]== 0 )return(XUP);
+   if( disp[XUP]== 0 && disp[YUP]==+1 && disp[ZUP]== 0 && disp[TUP]== 0 )return(YDOWN);
+   if( disp[XUP]== 0 && disp[YUP]==-1 && disp[ZUP]== 0 && disp[TUP]== 0 )return(YUP);
+   if( disp[XUP]== 0 && disp[YUP]== 0 && disp[ZUP]==+1 && disp[TUP]== 0 )return(ZDOWN);
+   if( disp[XUP]== 0 && disp[YUP]== 0 && disp[ZUP]==-1 && disp[TUP]== 0 )return(ZUP);
+   if( disp[XUP]== 0 && disp[YUP]== 0 && disp[ZUP]== 0 && disp[TUP]==+1 )return(TDOWN);
+   if( disp[XUP]== 0 && disp[YUP]== 0 && disp[ZUP]== 0 && disp[TUP]==-1 )return(TUP);
 
-    if (dx == +3 && dy==0 && dz==0 && dt==0) return X3DOWN;
-    if (dx == -3 && dy==0 && dz==0 && dt==0) return X3UP;
-    if (dy == +3 && dx==0 && dz==0 && dt==0) return Y3DOWN;
-    if (dy == -3 && dx==0 && dz==0 && dt==0) return Y3UP;
-    if (dz == +3 && dx==0 && dy==0 && dt==0) return Z3DOWN;
-    if (dz == -3 && dx==0 && dy==0 && dt==0) return Z3UP;
-    if (dt == +3 && dx==0 && dy==0 && dz==0) return T3DOWN;
-    if (dt == -3 && dx==0 && dy==0 && dz==0) return T3UP;
-
-    return NODIR;
+   if( disp[XUP]==+3 && disp[YUP]== 0 && disp[ZUP]== 0 && disp[TUP]== 0 )return(X3DOWN);
+   if( disp[XUP]==-3 && disp[YUP]== 0 && disp[ZUP]== 0 && disp[TUP]== 0 )return(X3UP);
+   if( disp[XUP]== 0 && disp[YUP]==+3 && disp[ZUP]== 0 && disp[TUP]== 0 )return(Y3DOWN);
+   if( disp[XUP]== 0 && disp[YUP]==-3 && disp[ZUP]== 0 && disp[TUP]== 0 )return(Y3UP);
+   if( disp[XUP]== 0 && disp[YUP]== 0 && disp[ZUP]==+3 && disp[TUP]== 0 )return(Z3DOWN);
+   if( disp[XUP]== 0 && disp[YUP]== 0 && disp[ZUP]==-3 && disp[TUP]== 0 )return(Z3UP);
+   if( disp[XUP]== 0 && disp[YUP]== 0 && disp[ZUP]== 0 && disp[TUP]==+3 )return(T3DOWN);
+   if( disp[XUP]== 0 && disp[YUP]== 0 && disp[ZUP]== 0 && disp[TUP]==-3 )return(T3UP);
+    printf("OOOPS: NODIR\n");
+   return( NODIR );
 }
+
+int sort_quark_paths( Q_path *src_table, Q_path *dest_table, int npaths ){
+
+    int netdir,dir0,dir1,dir1tmp,num_new,i,j;
+    int net_back_dirs[16] = 
+      { XDOWN, YDOWN, ZDOWN, TDOWN, XUP, YUP, ZUP, TUP, 
+	X3DOWN, Y3DOWN, Z3DOWN, T3DOWN, X3UP, Y3UP, Z3UP, T3UP };
+
+    num_new=0; // number of paths in sorted table
+    for( i=0; i<16; i++ ){ // loop over net_back_dirs
+        netdir = net_back_dirs[i]; // table of possible displacements for Fat-Naik
+	for( dir0=0; dir0<=7; dir0++){ // XUP ... TDOWN
+	  for( dir1=-1; dir1<=7; dir1++){ // NODIR, XUP ... TDOWN
+	    if( dir1==-1 )dir1tmp=NODIR; else dir1tmp=dir1;
+	    for( j=0; j<npaths; j++ ){ // pick out paths with right net displacement
+	      //	    thislength = src_table[j].length;
+	        if( find_backwards_gather_hw( &(src_table[j]) ) == netdir && 
+			src_table[j].dir[0]==dir0 &&
+			src_table[j].dir[1]==dir1tmp ){
+		    dest_table[num_new] = src_table[j];
+		    num_new++;
+	        }
+	    } // loop over paths
+	  } //dir1
+	} //dir0
+    }
+    if( num_new!=npaths){ printf("OOPS: path table error\n");}
+    return 0;
+} /* sort_quark_paths */
 
 
 /////////////////////////////////////////////////////////////////////////

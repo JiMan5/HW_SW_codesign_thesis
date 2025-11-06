@@ -6,10 +6,12 @@
 int main(void) {
 
     //inputs reads
+    int *netbackdir_table = (int *)malloc( FORW_Q_PATHS * sizeof(int) );
     Real *residues = NULL;
     su3_vector **multi_x = NULL;
     Q_path *q_paths = NULL;
-    Q_path *qpaths_forward = malloc(sizeof(Q_path) * FORW_Q_PATHS); //only with forwback == 1 
+    Q_path *qpaths_forward = malloc(sizeof(Q_path) * FORW_Q_PATHS); //only with forwback == 1
+    Q_path *qpaths_sorted = malloc(sizeof(Q_path) * NUM_Q_PATHS);
     su3_matrix (*links)[4] = NULL;
     anti_hermitmat (*mom_main)[4] = NULL;
     anti_hermitmat (*mom_after_tb)[4] = NULL;
@@ -24,18 +26,22 @@ int main(void) {
     mom_after_tb = read_mom("binaries/ff_mom_after.bin"); //mom_after for check
 
     printf("\nAll binary data loaded\n");
+    sort_quark_paths(q_paths, qpaths_sorted, NUM_Q_PATHS);
 
     //input only the paths with forwback == 1
     int idx = 0;
     for (int i = 0; i < NUM_Q_PATHS; i++) {
-        if (q_paths[i].forwback == 1) {
-            qpaths_forward[idx++] = q_paths[i];
+        if (qpaths_sorted[i].forwback == 1) {
+            qpaths_forward[idx] = qpaths_sorted[i];
+            netbackdir_table[idx] = find_backwards_gather_hw( &(qpaths_forward[idx]) );
+            idx++;
         }
     }
+    printf("debug for idx = %d\n", idx);
 
     
     //call the hw_friendly function
-    fermion_force_fn_multi_hw_friendly(residues, multi_x, qpaths_forward, links, mom_main);
+    fermion_force_fn_multi_hw_friendly(netbackdir_table, residues, multi_x, qpaths_forward, links, mom_main);
     printf("Finished with the hw_friendly call!\n");
 /*
 
@@ -96,6 +102,7 @@ int main(void) {
     }
     free(multi_x);
     free(q_paths);
+    free(qpaths_sorted);
     free(qpaths_forward);
     free(links);
     free(mom_main);

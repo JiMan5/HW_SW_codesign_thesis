@@ -113,9 +113,11 @@ int site_index_from_coords(int x, int y, int z, int t);
 void coords_from_site_index(int idx, int *x, int *y, int *z, int *t);
 int walk_netbackdir(int start_idx, int netbackdir);
 int find_backwards_gather_hw(const Q_path *path);
+int sort_quark_paths( Q_path *src_table, Q_path *dest_table, int npaths );
 
 //fermion_force_hw.c
 void fermion_force_fn_multi_hw_friendly(
+    int *netbackdirs_table,
     Real *residues,              
     su3_vector **multi_x,         
     Q_path *q_paths_forward,      
