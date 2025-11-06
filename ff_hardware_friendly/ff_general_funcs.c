@@ -305,31 +305,79 @@ void coords_from_site_index(int idx, int *x, int *y, int *z, int *t)
 
     *y = lex / NX;
     *x = lex - (*y) * NX;
+
+    if (((*x + *y + *z + *t) & 1) != expected_parity) {
+        (*x)++;
+        if (*x >= NX) { *x = 0; (*y)++; }
+        if (*y >= NY) { *y = 0; (*z)++; }
+        if (*z >= NZ) { *z = 0; (*t)++; }
+    }
 }
 
-int walk_path(int start_idx, const Q_path *path)
+int walk_netbackdir(int start_idx, int netbackdir)
 {
-    int x, y, z, t;
+    int x,y,z,t;
     coords_from_site_index(start_idx, &x, &y, &z, &t);
 
-    for (int step = 0; step < path->length; step++) {
-        int d = path->dir[step];
+    switch(netbackdir) {
+        case XUP:   x = (x + 1) % NX; break;
+        case XDOWN: x = (x - 1 + NX) % NX; break;
+        case YUP:   y = (y + 1) % NY; break;
+        case YDOWN: y = (y - 1 + NY) % NY; break;
+        case ZUP:   z = (z + 1) % NZ; break;
+        case ZDOWN: z = (z - 1 + NZ) % NZ; break;
+        case TUP:   t = (t + 1) % NT; break;
+        case TDOWN: t = (t - 1 + NT) % NT; break;
+    }
+
+    return site_index_from_coords(x,y,z,t);
+}
+
+// hardware-friendly, constant loop bounds
+int find_backwards_gather_hw(const Q_path *path)
+{
+    int dx = 0, dy = 0, dz = 0, dt = 0;
+
+    for (int i = 0; i < MAX_PATH_LENGTH; i++) {
+
+        //skip path shorter than max length
+        int d = (i < path->length) ? path->dir[i] : -1;
+        if (d < 0) continue;
 
         switch (d) {
-            case XUP: x = (x + 1) % NX; break;
-            case YUP: y = (y + 1) % NY; break;
-            case ZUP: z = (z + 1) % NZ; break;
-            case TUP: t = (t + 1) % NT; break;
-
-            case XDOWN: x = (x + NX - 1) % NX; break;
-            case YDOWN: y = (y + NY - 1) % NY; break;
-            case ZDOWN: z = (z + NZ - 1) % NZ; break;
-            case TDOWN: t = (t + NT - 1) % NT; break;
+            case XUP:    dx++; break;
+            case XDOWN:  dx--; break;
+            case YUP:    dy++; break;
+            case YDOWN:  dy--; break;
+            case ZUP:    dz++; break;
+            case ZDOWN:  dz--; break;
+            case TUP:    dt++; break;
+            case TDOWN:  dt--; break;
         }
     }
 
-    return site_index_from_coords(x, y, z, t);
+    //net direction
+    if (dx == +1 && dy==0 && dz==0 && dt==0) return XDOWN;
+    if (dx == -1 && dy==0 && dz==0 && dt==0) return XUP;
+    if (dy == +1 && dx==0 && dz==0 && dt==0) return YDOWN;
+    if (dy == -1 && dx==0 && dz==0 && dt==0) return YUP;
+    if (dz == +1 && dx==0 && dy==0 && dt==0) return ZDOWN;
+    if (dz == -1 && dx==0 && dy==0 && dt==0) return ZUP;
+    if (dt == +1 && dx==0 && dy==0 && dz==0) return TDOWN;
+    if (dt == -1 && dx==0 && dy==0 && dz==0) return TUP;
+
+    if (dx == +3 && dy==0 && dz==0 && dt==0) return X3DOWN;
+    if (dx == -3 && dy==0 && dz==0 && dt==0) return X3UP;
+    if (dy == +3 && dx==0 && dz==0 && dt==0) return Y3DOWN;
+    if (dy == -3 && dx==0 && dz==0 && dt==0) return Y3UP;
+    if (dz == +3 && dx==0 && dy==0 && dt==0) return Z3DOWN;
+    if (dz == -3 && dx==0 && dy==0 && dt==0) return Z3UP;
+    if (dt == +3 && dx==0 && dy==0 && dz==0) return T3DOWN;
+    if (dt == -3 && dx==0 && dy==0 && dz==0) return T3UP;
+
+    return NODIR;
 }
+
 
 /////////////////////////////////////////////////////////////////////////
 

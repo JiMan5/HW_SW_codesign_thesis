@@ -23,6 +23,16 @@
 #define YDOWN 6
 #define XDOWN 7
 
+//helper directions for netbackdir
+#define X3UP 8
+#define Y3UP 9
+#define Z3UP 10
+#define T3UP 11
+#define T3DOWN 12
+#define Z3DOWN 13
+#define Y3DOWN 14
+#define X3DOWN 15
+
 #define NODIR -1  /* not a direction */
 
 #define OPP_DIR(dir)	(7-(dir))	/* Opposite direction */
@@ -75,11 +85,6 @@ typedef struct {
   Real forwback;	/* +1 if in forward Dslash, -1 if in backward */
 } Q_path;
 
-typedef struct {
-    int axis;
-    int steps;
-    int sign;
-} PathDisp;
 
 //read files
 Real *read_residues(const char *fname);
@@ -106,16 +111,14 @@ void make_anti_hermitian( su3_matrix *m3, anti_hermitmat *ah3 );
 //helpers for path directions and indexing///////////////////////
 int site_index_from_coords(int x, int y, int z, int t);
 void coords_from_site_index(int idx, int *x, int *y, int *z, int *t);
-int walk_path(int start_idx, const Q_path *path);
+int walk_netbackdir(int start_idx, int netbackdir);
+int find_backwards_gather_hw(const Q_path *path);
 
 //fermion_force_hw.c
 void fermion_force_fn_multi_hw_friendly(
     Real *residues,              
     su3_vector **multi_x,         
     Q_path *q_paths_forward,      
-    const int path_axis[FORW_Q_PATHS],
-    const int path_steps[FORW_Q_PATHS],
-    const int path_sign[FORW_Q_PATHS],
     su3_matrix (*links)[4],       
     anti_hermitmat (*mom)[4]      
 );

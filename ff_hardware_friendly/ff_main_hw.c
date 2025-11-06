@@ -10,10 +10,6 @@ int main(void) {
     su3_vector **multi_x = NULL;
     Q_path *q_paths = NULL;
     Q_path *qpaths_forward = malloc(sizeof(Q_path) * FORW_Q_PATHS); //only with forwback == 1 
-    PathDisp disp_table[FORW_Q_PATHS];
-    int *axis = malloc(sizeof(int) * FORW_Q_PATHS); //for input pass (pio hw friendly)
-    int *steps = malloc(sizeof(int) * FORW_Q_PATHS); //for input pass (pio hw friendly)
-    int *sign = malloc(sizeof(int) * FORW_Q_PATHS); //for input pass (pio hw friendly)
     su3_matrix (*links)[4] = NULL;
     anti_hermitmat (*mom_main)[4] = NULL;
     anti_hermitmat (*mom_after_tb)[4] = NULL;
@@ -37,37 +33,11 @@ int main(void) {
         }
     }
 
-    //compute net disp and check for invalid paths (should be zero)
-    /*int bad_paths = 0;
-    for (int i = 0; i < FORW_Q_PATHS; i++) {
-        compute_net_disp(&qpaths_forward[i], &disp_table[i].axis, &disp_table[i].steps, &disp_table[i].sign);
-        axis[i] = disp_table[i].axis;
-        steps[i] = disp_table[i].steps;
-        sign[i] = disp_table[i].sign;
-        if (disp_table[i].axis == -1) {
-            printf("Warning: Path %d has multi-axis displacement, skipping.\n", i);
-            bad_paths++;
-        }
-    }
-    printf("Total invalid paths: %d\n", bad_paths);*/
-
-    for (int i = 0; i < 1000 && i < SITES_ON_NODE; ++i){
-        int x,y,z,t; coords_from_site_index(i,&x,&y,&z,&t);
-        int i2 = site_index_from_coords(x,y,z,t);
-        if (i2 != i) { printf("RT fail: i=%d -> (%d,%d,%d,%d) -> %d\n", i,x,y,z,t,i2); break; }
-    }
-
-    for (int i = 0; i < 1000 && i < SITES_ON_NODE; ++i){
-        int x,y,z,t; coords_from_site_index(i,&x,&y,&z,&t);
-        int p = (x+y+z+t) & 1;
-        int block = (i < (SITES_ON_NODE/2)) ? 0 : 1;
-        if (p != block) { printf("Parity mismatch at i=%d\n", i); break; }
-    }
-    /*
+    
     //call the hw_friendly function
-    fermion_force_fn_multi_hw_friendly(residues, multi_x, qpaths_forward, axis, steps, sign, links, mom_main);
+    fermion_force_fn_multi_hw_friendly(residues, multi_x, qpaths_forward, links, mom_main);
     printf("Finished with the hw_friendly call!\n");
-
+/*
 
         // Compare mom_main (computed) vs mom_after_tb (reference)
     double total_sq_diff = 0.0;

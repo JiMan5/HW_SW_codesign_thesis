@@ -2,13 +2,17 @@
 #include <stdlib.h>
 #include "ff_headers.h"
 
+void dump_matrix_array(const char *fname, su3_matrix *arr) {
+    FILE *f = fopen(fname, "wb");
+    if (!f) { perror(fname); return; }
+    fwrite(arr, sizeof(su3_matrix), SITES_ON_NODE, f);
+    fclose(f);
+}
+
 void fermion_force_fn_multi_hw_friendly(
     Real *residues,               //size NTERMS
     su3_vector **multi_x,         //[NTERMS][SITES_ON_NODE]
     Q_path *q_paths_forward,      //[FORW_Q_PATHS] (only forward paths)
-    const int path_axis[FORW_Q_PATHS],
-    const int path_steps[FORW_Q_PATHS],
-    const int path_sign[FORW_Q_PATHS],
     su3_matrix (*links)[4],       //[SITES_ON_NODE][4]
     anti_hermitmat (*mom)[4]      //[SITES_ON_NODE][4] (packed)
 )
@@ -34,9 +38,8 @@ void fermion_force_fn_multi_hw_friendly(
     for (int ipath = 0; ipath < FORW_Q_PATHS; ++ipath) {
         const Q_path *this_path = &q_paths_forward[ipath];
         int dir0  = this_path->dir[0]; //for first link of path later
-        int axis  = path_axis[ipath];
-        int steps = path_steps[ipath];
-        int sign  = path_sign[ipath];
+        int netbackdir = find_backwards_gather_hw(this_path);
+        printf("netbackdir = %d\n", netbackdir);
         int length = this_path->length;
         Real coeff = ferm_epsilon * this_path->coeff;
 
@@ -49,12 +52,20 @@ void fermion_force_fn_multi_hw_friendly(
         //loop over terms
         for (int term = 0; term < NTERMS; term++) {
             for (size_t i = 0; i < SITES_ON_NODE; i++) {
-                int nbr = neighbor_index_axis((int)i, axis, steps, sign);
+                int nbr = walk_netbackdir((int)i, netbackdir);
                 su3_projector(&multi_x[term][i], &multi_x[term][nbr], &tmat);
                 scalar_mult_add_su3_matrix(&oprod_along_path[0][i], &tmat, residues[term], &oprod_along_path[0][i]);
             }
         }
-        
+
+        //debug dump
+        char fname[128];
+        snprintf(fname, sizeof(fname), "hw_oprod_path_%03d.bin", ipath);
+        dump_matrix_array(fname, oprod_along_path[0]);
+        printf("Dumped oprod_along_path[0] for path %d\n", ipath);
+
+
+        /*
         //hw friendly oso ginetai static for loop path. Tha mporoysa isws na kanw presort ta paths me to length toys akrivws kai na treksw 3 diaforetikes loopes. TBD
         for (int ilink = 0; ilink < MAX_PATH_LENGTH; ++ilink) {
             if (ilink < length) {
@@ -158,6 +169,7 @@ void fermion_force_fn_multi_hw_friendly(
             add_su3_matrix(&tmat2, &force_accum[d][i], &tmat2);
             make_anti_hermitian(&tmat2, &mom[i][d]);
         }
+    }*/
     }
 }
 
