@@ -39,7 +39,6 @@ void fermion_force_fn_multi_hw_friendly(
     for (int ipath = 0; ipath < FORW_Q_PATHS; ++ipath) {
         const Q_path *this_path = &q_paths_forward[ipath];
         int dir0  = this_path->dir[0]; //for first link of path later
-        printf("ipath = %d, netbackdir = %d\n", ipath, netbackdirs_table[ipath]);
         int length = this_path->length;
         Real coeff = ferm_epsilon * this_path->coeff;
 
@@ -52,31 +51,17 @@ void fermion_force_fn_multi_hw_friendly(
         //loop over terms
         for (int term = 0; term < NTERMS; term++) {
             for (size_t i = 0; i < SITES_ON_NODE; i++) {
-                int nbr = walk_netbackdir((int)i, netbackdirs_table[ipath]);
-                  // DEBUG PRINT (same condition!)
-                if (ipath == 0 && term == 0 && i == 12345) {
-
-                    su3_vector *hw_remote_vec = &multi_x[term][nbr];
-
-                    printf("\nDEBUG VECTOR COMPARE (HW-friendly)\n");
-                    printf("site %zu    netbackdir=%d   nbr=%d\n", i, netbackdirs_table[ipath], nbr);
-
-                    printf("HW walk(): (%f, %f), (%f, %f), (%f, %f)\n",
-                        hw_remote_vec->c[0].real, hw_remote_vec->c[0].imag,
-                        hw_remote_vec->c[1].real, hw_remote_vec->c[1].imag,
-                        hw_remote_vec->c[2].real, hw_remote_vec->c[2].imag);
-                }
-                //if(term == 0 && i<10) printf("nbr = %d\n", nbr);
+                int nbr = walk_dir((int)i, netbackdirs_table[ipath]);
                 su3_projector(&multi_x[term][i], &multi_x[term][nbr], &tmat);
                 scalar_mult_add_su3_matrix(&oprod_along_path[0][i], &tmat, residues[term], &oprod_along_path[0][i]);
             }
         }
 
         //debug dump
-        /*char fname[128];
+        char fname[128];
         snprintf(fname, sizeof(fname), "hw_oprod_path_%03d.bin", ipath);
         dump_matrix_array(fname, oprod_along_path[0]);
-        printf("Dumped oprod_along_path[0] for path %d\n", ipath);*/
+        printf("Dumped oprod_along_path[0] for path %d\n", ipath);
 
 
         /*

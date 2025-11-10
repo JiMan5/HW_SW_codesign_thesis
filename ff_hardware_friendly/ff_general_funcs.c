@@ -283,43 +283,37 @@ int site_index_from_coords(int x, int y, int z, int t)
         return (ir + SITES_ON_NODE) >> 1;      // ODD block: (ir+N)/2
 }
 
-//opposite but with correct EVEN, ODD assumptions
 void coords_from_site_index(int idx, int *x, int *y, int *z, int *t)
 {
-    const int neven = SITES_ON_NODE / 2;
-    int lex;
+    int parity_group_size = (NX * NY * NZ * NT) / 2;
+    int parity = (idx < parity_group_size) ? 0 : 1;
+    int offset = (parity == 0) ? idx : (idx - parity_group_size);
+    // offset is now lexicographic linear index *within that parity class*
+    // iterate through lexicographic (t,z,y,x) space skipping wrong parity
+    int count = 0;
 
-    int expected_parity = (idx < neven) ? 0 : 1;
-
-    if (idx < neven)
-        lex = idx * 2;           //even block
-    else
-        lex = (idx - neven) * 2 + 1;  //odd block
-
-    //decode
-    *t = lex / (NX * NY * NZ);
-    lex -= (*t) * (NX * NY * NZ);
-
-    *z = lex / (NX * NY);
-    lex -= (*z) * (NX * NY);
-
-    *y = lex / NX;
-    *x = lex - (*y) * NX;
-
-    if (((*x + *y + *z + *t) & 1) != expected_parity) {
-        (*x)++;
-        if (*x >= NX) { *x = 0; (*y)++; }
-        if (*y >= NY) { *y = 0; (*z)++; }
-        if (*z >= NZ) { *z = 0; (*t)++; }
-    }
+    for (int tt = 0; tt < NT; tt++)
+        for (int zz = 0; zz < NZ; zz++)
+            for (int yy = 0; yy < NY; yy++)
+                for (int xx = 0; xx < NX; xx++)
+                    if (((xx + yy + zz + tt) & 1) == parity) {
+                        if (count == offset) {
+                            *x = xx;
+                            *y = yy;
+                            *z = zz;
+                            *t = tt;
+                            return;
+                        }
+                        count++;
+                    }
 }
 
-int walk_netbackdir(int start_idx, int netbackdir)
+int walk_dir(int start_idx, int dir)
 {
     int x,y,z,t;
     coords_from_site_index(start_idx, &x, &y, &z, &t);
 
-    switch(netbackdir) {
+    switch(dir) {
         case XUP:   x = (x + 1) % NX; break;
         case XDOWN: x = (x - 1 + NX) % NX; break;
         case YUP:   y = (y + 1) % NY; break;

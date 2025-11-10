@@ -111,7 +111,7 @@ void make_anti_hermitian( su3_matrix *m3, anti_hermitmat *ah3 );
 //helpers for path directions and indexing///////////////////////
 int site_index_from_coords(int x, int y, int z, int t);
 void coords_from_site_index(int idx, int *x, int *y, int *z, int *t);
-int walk_netbackdir(int start_idx, int netbackdir);
+int walk_dir(int start_idx, int dir);
 int find_backwards_gather_hw(const Q_path *path);
 int sort_quark_paths( Q_path *src_table, Q_path *dest_table, int npaths );
 
