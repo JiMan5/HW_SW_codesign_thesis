@@ -114,6 +114,141 @@ void dump_matrix_array_cpu(const char *fname, su3_matrix *arr) {
     fwrite(arr, sizeof(su3_matrix), sites_on_node, f);
     fclose(f);
 }
+//returns memory index of a given (x,y,z,t) coordinate
+int site_index_from_coords(int x, int y, int z, int t)
+{
+    int ir = x + NX*(y + NY*(z + NZ*t));       // lexicographic, x-fastest
+
+    int parity = (x + y + z + t) & 1;          // 0 = EVEN, 1 = ODD
+
+    if(parity == 0)
+        return ir >> 1;                        // EVEN block: ir/2
+    else
+        return (ir + SITES_ON_NODE) >> 1;      // ODD block: (ir+N)/2
+}
+
+//opposite but with correct EVEN, ODD assumptions
+/*void coords_from_site_index(int idx, int *x, int *y, int *z, int *t)
+{
+    const int neven = SITES_ON_NODE / 2;
+    int lex;
+
+    int expected_parity = (idx < neven) ? 0 : 1;
+
+    if (idx < neven)
+        lex = idx * 2;           //even block
+    else
+        lex = (idx - neven) * 2 + 1;  //odd block
+
+    //decode
+    *t = lex / (NX * NY * NZ);
+    lex -= (*t) * (NX * NY * NZ);
+
+    *z = lex / (NX * NY);
+    lex -= (*z) * (NX * NY);
+
+    *y = lex / NX;
+    *x = lex - (*y) * NX;
+
+    /*if (((*x + *y + *z + *t) & 1) != expected_parity) {
+        (*x)++;
+        if (*x >= NX) { *x = 0; (*y)++; }
+        if (*y >= NY) { *y = 0; (*z)++; }
+        if (*z >= NZ) { *z = 0; (*t)++; }
+    }
+}
+
+void coords_from_site_index(int idx, int *x, int *y, int *z, int *t)
+{
+    if(idx==10)printf("something\n");
+    const int neven = SITES_ON_NODE / 2;
+    int parity = (idx < neven ? 0 : 1);
+
+    int local = (idx < neven ? idx : idx - neven);
+
+    // How many even (or odd) sites per (t,z,y) hyperplane
+    int per_hyperplane = (NX * NY * NZ) / 2;
+    int per_row        = NX / 2;
+
+    *t = local / (per_hyperplane);
+    local -= (*t) * per_hyperplane;
+
+    *z = local / (NY * per_row);
+    local -= (*z) * (NY * per_row);
+
+    *y = local / per_row;
+    local -= (*y) * per_row;
+
+    // Reconstruct x from parity and local index
+    *x = local * 2 + parity;
+}*/
+
+void coords_from_site_index(int idx, int *x, int *y, int *z, int *t)
+{
+    int parity_group_size = (NX * NY * NZ * NT) / 2;
+    int parity = (idx < parity_group_size) ? 0 : 1;
+    int offset = (parity == 0) ? idx : (idx - parity_group_size);
+    if(idx==1)printf("ksana edw!\n");
+    // offset is now lexicographic linear index *within that parity class*
+    // iterate through lexicographic (t,z,y,x) space skipping wrong parity
+    int count = 0;
+
+    for (int tt = 0; tt < NT; tt++)
+        for (int zz = 0; zz < NZ; zz++)
+            for (int yy = 0; yy < NY; yy++)
+                for (int xx = 0; xx < NX; xx++)
+                    if (((xx + yy + zz + tt) & 1) == parity) {
+                        if (count == offset) {
+                            *x = xx;
+                            *y = yy;
+                            *z = zz;
+                            *t = tt;
+                            return;
+                        }
+                        count++;
+                    }
+}
+
+int walk_netbackdir(int start_idx, int netbackdir)
+{
+    int x,y,z,t;
+    coords_from_site_index(start_idx, &x, &y, &z, &t);
+
+    switch(netbackdir) {
+        case XUP:   x = (x + 1) % NX; break;
+        case XDOWN: x = (x - 1 + NX) % NX; break;
+        case YUP:   y = (y + 1) % NY; break;
+        case YDOWN: y = (y - 1 + NY) % NY; break;
+        case ZUP:   z = (z + 1) % NZ; break;
+        case ZDOWN: z = (z - 1 + NZ) % NZ; break;
+        case TUP:   t = (t + 1) % NT; break;
+        case TDOWN: t = (t - 1 + NT) % NT; break;
+    }
+
+    return site_index_from_coords(x,y,z,t);
+}
+
+static int milc_find_site_index_by_xyzt(int x,int y,int z,int t){
+  for(size_t ii=0; ii<sites_on_node; ++ii){
+    if(lattice[ii].x==x && lattice[ii].y==y && lattice[ii].z==z && lattice[ii].t==t)
+      return (int)ii;
+  }
+  return -1; // not found (should never happen)
+}
+
+// Step coords by a single dir with periodic BC
+static inline void step_xyzt(int *x,int *y,int *z,int *t,int dir){
+  switch(dir){
+    case XUP:   *x = (*x + 1) % NX; break;
+    case XDOWN: *x = (*x - 1 + NX) % NX; break;
+    case YUP:   *y = (*y + 1) % NY; break;
+    case YDOWN: *y = (*y - 1 + NY) % NY; break;
+    case ZUP:   *z = (*z + 1) % NZ; break;
+    case ZDOWN: *z = (*z - 1 + NZ) % NZ; break;
+    case TUP:   *t = (*t + 1) % NT; break;
+    case TDOWN: *t = (*t - 1 + NT) % NT; break;
+  }
+}
 
 void 
 fermion_force_fn_multi( Real eps, Real *residues, 
@@ -229,11 +364,6 @@ fermion_force_fn_multi( Real eps, Real *residues,
     sort_quark_paths( q_paths, q_paths_sorted, num_q_paths );
     for( ipath=0; ipath<num_q_paths; ipath++ ){
       netbackdir_table[ipath] = find_backwards_gather( &(q_paths_sorted[ipath]) );
-      //TESTAKI BEGIN
-      this_path = &(q_paths_sorted[ipath]);
-      if(this_path->forwback== -1)continue;	/* skip backwards dslash */
-      else printf("i = %d, netbackdir = %d\n", ipath, netbackdir_table[ipath]);
-      //TESTAKI END
     }
     printf("=== PATH AXIS CHECK ===\n");
     first_force=0;
@@ -267,10 +397,97 @@ fermion_force_fn_multi( Real eps, Real *residues,
           if(term<nterms-1)mtag[1-k] = start_gather_field( multi_x[term+1],
 		sizeof(su3_vector), netbackdir, EVENANDODD, gen_pt[1-k] );
           wait_gather(mtag[k]);
+          printf("\nDEBUG VECTOR COMPARE (CPU original MILC)\n");
+          /*
+          // ---- CHECK OUR HW INDEX MAPPING ---- //
+if (ipath == 0 && term == 0) {
+    int mism = 0, printed = 0, maxp = 300;
+
+    for (int i = 0; i < sites_on_node; i++) {
+        int x0 = lattice[i].x, y0 = lattice[i].y, z0 = lattice[i].z, t0 = lattice[i].t;
+
+        // forward: coords -> idx
+        int idx_fwd = site_index_from_coords(x0,y0,z0,t0);
+        if (idx_fwd != i) {
+            if (printed < maxp) {
+                printf("FWD MISM: i=%d  idx_fwd=%d  coords=(%d,%d,%d,%d)\n", i, idx_fwd, x0,y0,z0,t0);
+                printed++;
+            }
+            mism++;
+            continue;
+        }
+
+        // inverse: idx -> coords
+        int x1,y1,z1,t1;
+        coords_from_site_index(i, &x1,&y1,&z1,&t1);
+
+        if (x1!=x0 || y1!=y0 || z1!=z0 || t1!=t0) {
+            if (printed < maxp) {
+                printf("INV MISM: i=%d  lattice(%d,%d,%d,%d) vs mine(%d,%d,%d,%d)\n",
+                       i, x0,y0,z0,t0, x1,y1,z1,t1);
+                printed++;
+            }
+            mism++;
+        }
+    }
+
+    if (mism == 0) printf("[OK] coords_from_site_index is a true inverse.\n");
+    else printf("[FAIL] coords_from_site_index mismatches: %d\n", mism);
+}*/
+          
+          if (ipath == 0 && term == 0) {  // or remove this guard to check every forward path
+  int mismatches = 0;
+  int printed = 0;
+  const int max_print = 1000;   // print at most 5 detailed lines
+  const float eps = 1e-6f;
+
+  // netbackdir is already computed above
+  FORALLSITES(i,s) {
+    su3_vector *milc_vec = (su3_vector*)gen_pt[k][i];
+    int real_idx = (int)(milc_vec - multi_x[term]);   // index into multi_x[term]
+    int calc_idx = walk_netbackdir(i, netbackdir);
+
+    // quick exact index check
+    int idx_ok = (real_idx == calc_idx);
+
+    // optional numeric check on vector contents
+    su3_vector *hw_vec = &multi_x[term][calc_idx];
+    float d0r = fabsf(milc_vec->c[0].real - hw_vec->c[0].real);
+    float d0i = fabsf(milc_vec->c[0].imag - hw_vec->c[0].imag);
+    float d1r = fabsf(milc_vec->c[1].real - hw_vec->c[1].real);
+    float d1i = fabsf(milc_vec->c[1].imag - hw_vec->c[1].imag);
+    float d2r = fabsf(milc_vec->c[2].real - hw_vec->c[2].real);
+    float d2i = fabsf(milc_vec->c[2].imag - hw_vec->c[2].imag);
+    int vec_ok = (d0r < eps && d0i < eps && d1r < eps && d1i < eps && d2r < eps && d2i < eps);
+
+    if (!idx_ok || !vec_ok) {
+      mismatches++;
+      if (printed < max_print) {
+        printf("MISMATCH: ipath=%d term=%d site=%d netbackdir=%d  real_idx=%d  calc_idx=%d\n",
+               ipath, term, i, netbackdir, real_idx, calc_idx);
+        printf("  milc: (%g,%g) (%g,%g) (%g,%g)\n",
+               milc_vec->c[0].real, milc_vec->c[0].imag,
+               milc_vec->c[1].real, milc_vec->c[1].imag,
+               milc_vec->c[2].real, milc_vec->c[2].imag);
+        printf("   calc: (%g,%g) (%g,%g) (%g,%g)\n",
+               hw_vec->c[0].real, hw_vec->c[0].imag,
+               hw_vec->c[1].real, hw_vec->c[1].imag,
+               hw_vec->c[2].real, hw_vec->c[2].imag);
+        printed++;
+      }
+    }
+  }
+  if (mismatches == 0)
+    printf("[OK] ipath=%d term=%d: gen_pt == walk_netbackdir for all sites\n", ipath, term);
+  else
+    printf("[WARN] ipath=%d term=%d: mismatches=%d (showing up to %d)\n",
+           ipath, term, mismatches, max_print);
+}
           FORALLSITES(i,s){
 	    su3_projector( &multi_x[term][i], (su3_vector *)gen_pt[k][i], &tmat );
 	    scalar_mult_add_su3_matrix( &oprod_along_path[0][i], &tmat, residues[term], &oprod_along_path[0][i] );
           }
+          printf("debug ended, all is good <3\n");
           cleanup_gather(mtag[k]);
 	  k=1-k; // swap 0 and 1
         } /* end loop over terms in rational function expansion */

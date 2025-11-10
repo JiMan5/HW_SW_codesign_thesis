@@ -53,7 +53,20 @@ void fermion_force_fn_multi_hw_friendly(
         for (int term = 0; term < NTERMS; term++) {
             for (size_t i = 0; i < SITES_ON_NODE; i++) {
                 int nbr = walk_netbackdir((int)i, netbackdirs_table[ipath]);
-                if(term == 0 && i<10) printf("nbr = %d\n", nbr);
+                  // DEBUG PRINT (same condition!)
+                if (ipath == 0 && term == 0 && i == 12345) {
+
+                    su3_vector *hw_remote_vec = &multi_x[term][nbr];
+
+                    printf("\nDEBUG VECTOR COMPARE (HW-friendly)\n");
+                    printf("site %zu    netbackdir=%d   nbr=%d\n", i, netbackdirs_table[ipath], nbr);
+
+                    printf("HW walk(): (%f, %f), (%f, %f), (%f, %f)\n",
+                        hw_remote_vec->c[0].real, hw_remote_vec->c[0].imag,
+                        hw_remote_vec->c[1].real, hw_remote_vec->c[1].imag,
+                        hw_remote_vec->c[2].real, hw_remote_vec->c[2].imag);
+                }
+                //if(term == 0 && i<10) printf("nbr = %d\n", nbr);
                 su3_projector(&multi_x[term][i], &multi_x[term][nbr], &tmat);
                 scalar_mult_add_su3_matrix(&oprod_along_path[0][i], &tmat, residues[term], &oprod_along_path[0][i]);
             }
