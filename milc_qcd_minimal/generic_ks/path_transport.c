@@ -301,31 +301,23 @@ void link_transport_connection( su3_matrix *src, su3_matrix *dest,
     register site *s;
     msg_tag *mtag0;
 
-	/* increment call counter */
-    g_link_transport_calls++; //jim
-
     if( GOES_FORWARDS(dir) ) {
 	mtag0 = start_gather_field( src, sizeof(su3_matrix),
 	    dir, EVENANDODD, gen_pt[0] );
 	wait_gather(mtag0);
 
-	uint64_t local_mults = 0; //jim
 	FORALLSITES_OMP(i,s,){
 	    mult_su3_nn( &(s->link[dir]), (su3_matrix *)(gen_pt[0][i]),
 		&(dest[i]) );
-		local_mults++; //jim
 	} END_LOOP_OMP;
 	cleanup_gather(mtag0);
     }
 
     else{ /* GOES_BACKWARDS(dir) */
-		uint64_t local_mults = 0; //jim
       FORALLSITES_OMP(i,s,){
 	    mult_su3_an( &(s->link[OPP_DIR(dir)]),
 		&(src[i]), &(work[i]) );
-		local_mults++; //jim
       } END_LOOP_OMP;
-	  __atomic_fetch_add(&g_mult_calls, local_mults, __ATOMIC_RELAXED); //jim
 
       mtag0 = start_gather_field( work, sizeof(su3_matrix),
 				  dir, EVENANDODD, gen_pt[0] );
@@ -336,25 +328,6 @@ void link_transport_connection( su3_matrix *src, su3_matrix *dest,
       cleanup_gather(mtag0);
     }
 } /* link_transport_connection */
-
-//jim
-/* Will be called automatically at program exit */
-static void report_link_transport_counts(void){
-    if(this_node == 0){
-        printf("LINK_TRANSPORT STATS:\n");
-        printf("  Total link_transport_connection calls = %llu\n",
-               (unsigned long long)g_link_transport_calls);
-        printf("  Total mult_su3_nn/an (per-site multiplications) = %llu\n",
-               (unsigned long long)g_mult_calls);
-    }
-}
-
-/* Register the reporter with atexit */
-__attribute__((constructor))
-static void setup_reporter(void){
-    atexit(report_link_transport_counts);
-}
-//jim
 
 
 

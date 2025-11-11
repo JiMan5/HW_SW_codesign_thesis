@@ -401,25 +401,26 @@ int sort_quark_paths( Q_path *src_table, Q_path *dest_table, int npaths ){
 
 
 //link_transport_connection
-/*void link_transport_connection(su3_matrix *src, su3_matrix *dest, su3_matrix *work, int dir, su3_matrix (*links)[4]){
+void link_transport_connection(su3_matrix *src, su3_matrix *dest, su3_matrix *work, int dir, su3_matrix (*links)[4]){
 
     if (GOES_FORWARDS(dir)) {
         //forw: dest[i] = U_dir(i) * src[i + dir]
         for (size_t i = 0; i < SITES_ON_NODE; ++i) {
-            int nbr = neighbor_index_axis((int)i, dir, 1, +1);   // i + 1 along axis
+            int nbr = walk_dir((int)i, dir);   // i + 1 along axis
             mult_su3_nn(&links[i][dir], &src[nbr], &dest[i]);
         }
     } 
     else {
-        //backwards movement has two steps
-        //step 1: work[i]
+        //backwards movement
+        //work[i]
+        int odir = OPP_DIR(dir);
         for (size_t i = 0; i < SITES_ON_NODE; ++i) {
-            mult_su3_an(&links[i][OPP_DIR(dir)], &src[i], &work[i]);
+            mult_su3_an(&links[i][odir], &src[i], &work[i]);
         }
-        //step 2: dest[i] = work[i - 1 along axis]  (i + (-1) step)
+        //dest[i] = work[i - 1 along axis]  (i + (-1) step)
         for (size_t i = 0; i < SITES_ON_NODE; ++i) {
-            int nbr = neighbor_index_axis((int)i, OPP_DIR(dir), 1, -1);  // i - 1 along axis
+            int nbr = walk_dir((int)i, dir);
             dest[i] = work[nbr];
         }
     }
-}*/
+}
