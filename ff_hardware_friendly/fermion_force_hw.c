@@ -36,14 +36,17 @@ void fermion_force_fn_multi_hw_friendly(
     }
 
     //big loop over paths
+    int last_netbackdir = NODIR;
+
     for (int ipath = 0; ipath < FORW_Q_PATHS; ++ipath) {
         const Q_path *this_path = &q_paths_forward[ipath];
         int dir0  = this_path->dir[0]; //for first link of path later
         int length = this_path->length;
         Real coeff = ferm_epsilon * this_path->coeff;
 
-        
-        //clear junk data
+        if(last_netbackdir!=netbackdirs_table[ipath]){
+            printf("netbackdir = %d", netbackdirs_table[ipath]);
+            //clear junk data
         for (size_t i = 0; i < SITES_ON_NODE; ++i) {
             clear_su3mat(&oprod_along_path[0][i]);
         }
@@ -59,9 +62,11 @@ void fermion_force_fn_multi_hw_friendly(
 
         //debug dump
         char fname[128];
-        snprintf(fname, sizeof(fname), "hw_oprod_path_newwalk_%03d.bin", ipath);
+        snprintf(fname, sizeof(fname), "oprod_bins/hw_oprod_path_newwalk_%03d.bin", ipath);
         dump_matrix_array(fname, oprod_along_path[0]);
         printf("Dumped oprod_along_path[0] for path %d\n", ipath);
+        }
+        last_netbackdir = netbackdirs_table[ipath];
 
 
         /*

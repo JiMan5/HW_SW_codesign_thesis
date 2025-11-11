@@ -318,6 +318,15 @@ int walk_dir(int start_idx, int dir)
         case ZDOWN: z = (z - 1 + NZ) % NZ; break;
         case TUP:   t = (t + 1) % NT; break;
         case TDOWN: t = (t - 1 + NT) % NT; break;
+        
+        case X3UP:    x = (x + 3) % NX; break;
+        case X3DOWN:  x = (x - 3 + NX) % NX; break;
+        case Y3UP:    y = (y + 3) % NY; break;
+        case Y3DOWN:  y = (y - 3 + NY) % NY; break;
+        case Z3UP:    z = (z + 3) % NZ; break;
+        case Z3DOWN:  z = (z - 3 + NZ) % NZ; break;
+        case T3UP:    t = (t + 3) % NT; break;
+        case T3DOWN:  t = (t - 3 + NT) % NT; break;
     }
 
     return site_index_from_coords(x,y,z,t);
