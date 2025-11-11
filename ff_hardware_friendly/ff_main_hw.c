@@ -37,8 +37,6 @@ int main(void) {
             idx++;
         }
     }
-    printf("debug for idx = %d\n", idx);
-
     
     //call the hw_friendly function
     fermion_force_fn_multi_hw_friendly(netbackdir_table, residues, multi_x, qpaths_forward, links, mom_main);

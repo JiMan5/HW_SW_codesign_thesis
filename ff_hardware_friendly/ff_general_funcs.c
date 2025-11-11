@@ -283,29 +283,25 @@ int site_index_from_coords(int x, int y, int z, int t)
         return (ir + SITES_ON_NODE) >> 1;      // ODD block: (ir+N)/2
 }
 
-void coords_from_site_index(int idx, int *x, int *y, int *z, int *t)
+ void coords_from_site_index(int idx, int *x, int *y, int *z, int *t)
 {
-    int parity_group_size = (NX * NY * NZ * NT) / 2;
-    int parity = (idx < parity_group_size) ? 0 : 1;
-    int offset = (parity == 0) ? idx : (idx - parity_group_size);
-    // offset is now lexicographic linear index *within that parity class*
-    // iterate through lexicographic (t,z,y,x) space skipping wrong parity
-    int count = 0;
+    int neven = (int)(SITES_ON_NODE >> 1);
+    int p_block = (idx < neven) ? 0 : 1;          // 0: even block, 1: odd block
+    int ib = (idx < neven) ? idx : (idx - neven);       // index within the parity block
 
-    for (int tt = 0; tt < NT; tt++)
-        for (int zz = 0; zz < NZ; zz++)
-            for (int yy = 0; yy < NY; yy++)
-                for (int xx = 0; xx < NX; xx++)
-                    if (((xx + yy + zz + tt) & 1) == parity) {
-                        if (count == offset) {
-                            *x = xx;
-                            *y = yy;
-                            *z = zz;
-                            *t = tt;
-                            return;
-                        }
-                        count++;
-                    }
+    int nX2   = NX >> 1;                          // NX/2
+    int slab  = nX2;                              // per y
+    int row   = nX2 * NY;                         // per z
+    int plane = nX2 * NY * NZ;                    // per t
+
+    *t = ib / plane;    ib -= (*t) * plane;
+    *z = ib / row;      ib -= (*z) * row;
+    *y = ib / slab;
+    int x2 = ib - (*y) * slab;                    // == ib % slab
+
+    int parity_yzt = ((*y + *z + *t) & 1);
+    int add = (p_block ^ parity_yzt);             // 0 -> even x, 1 -> odd x
+    *x = (x2 << 1) + add;                               // x = 2*x2 + add
 }
 
 int walk_dir(int start_idx, int dir)

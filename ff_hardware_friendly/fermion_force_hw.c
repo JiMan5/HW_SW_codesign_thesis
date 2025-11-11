@@ -59,7 +59,7 @@ void fermion_force_fn_multi_hw_friendly(
 
         //debug dump
         char fname[128];
-        snprintf(fname, sizeof(fname), "hw_oprod_path_%03d.bin", ipath);
+        snprintf(fname, sizeof(fname), "hw_oprod_path_newwalk_%03d.bin", ipath);
         dump_matrix_array(fname, oprod_along_path[0]);
         printf("Dumped oprod_along_path[0] for path %d\n", ipath);
 
