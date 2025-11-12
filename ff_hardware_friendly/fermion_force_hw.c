@@ -72,6 +72,8 @@ void fermion_force_fn_multi_hw_friendly(
             }
         }
 
+        //to add dump. Probably inside the link_transport_connection to check correctness. Also should add dump inside the original milc code
+
         /*
         //first link of path
         if (GOES_FORWARDS(dir0)){
