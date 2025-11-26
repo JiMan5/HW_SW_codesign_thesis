@@ -16,6 +16,11 @@
 #define special_free free
 #endif
 
+#define NX 16
+#define NY 16
+#define NZ 16
+#define NT 32
+
 
 static uint64_t g_link_transport_calls = 0ULL; //jim
 static uint64_t g_mult_calls = 0ULL;   /* counts per-site multiplications */ //jim
@@ -294,6 +299,15 @@ void path_transport_connection_hisq( su3_matrix *src, su3_matrix **links, su3_ma
   }
 } /* path_transport_connection_hisq */
 
+/*void print_su3(const su3_matrix *m) {
+    for(int r=0;r<3;r++){
+        for(int c=0;c<3;c++){
+            printf(" (%g,%g)", m->e[r][c].real, m->e[r][c].imag);
+        }
+        printf("\n");
+    }
+}*/
+
 // special case to transport a "connection" by one link, does both parities
 void link_transport_connection( su3_matrix *src, su3_matrix *dest,
   su3_matrix *work, int dir ){
@@ -305,7 +319,6 @@ void link_transport_connection( su3_matrix *src, su3_matrix *dest,
 	mtag0 = start_gather_field( src, sizeof(su3_matrix),
 	    dir, EVENANDODD, gen_pt[0] );
 	wait_gather(mtag0);
-
 	FORALLSITES_OMP(i,s,){
 	    mult_su3_nn( &(s->link[dir]), (su3_matrix *)(gen_pt[0][i]),
 		&(dest[i]) );
@@ -314,7 +327,28 @@ void link_transport_connection( su3_matrix *src, su3_matrix *dest,
     }
 
     else{ /* GOES_BACKWARDS(dir) */
+	  int countertemp = 0;
       FORALLSITES_OMP(i,s,){
+		if(i<20 && dir==7){
+			countertemp++;
+			int test = i * 12345 % sites_on_node; // pseudo-random
+			s = &lattice[test];
+			int x,y,z,t, xn,yn,zn,tn;
+            coords_from_site_index(test, &x,&y,&z,&t);
+			//int nbr = ((char*)gen_pt[0][test] - (char*)src) / sizeof(su3_matrix);
+            //coords_from_site_index(nbr, &xn,&yn,&zn,&tn);
+
+            printf("FWD dir=%d odir = %d i=%d site=(%d,%d,%d,%d) "
+                   "\n",
+                   dir, OPP_DIR(dir), test, x,y,z,t);
+			
+			printf("U "); print_su3(&(s->link[OPP_DIR(dir)]));
+            printf("src"); print_su3(&src[test]);
+			if(countertemp==20){
+				printf("countertemp = %d\n", countertemp); 
+				exit(0);
+			} 
+		}
 	    mult_su3_an( &(s->link[OPP_DIR(dir)]),
 		&(src[i]), &(work[i]) );
       } END_LOOP_OMP;

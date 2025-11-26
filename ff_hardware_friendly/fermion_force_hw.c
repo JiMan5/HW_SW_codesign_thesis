@@ -65,11 +65,14 @@ void fermion_force_fn_multi_hw_friendly(
         }
 
         //hw friendly oso ginetai static for loop path. Tha mporoysa isws na kanw presort ta paths me to length toys akrivws kai na treksw 3 diaforetikes loopes. TBD
-        for (int ilink = 0; ilink < MAX_PATH_LENGTH; ++ilink) {
-            if (ilink < length) {
-                int dir = this_path->dir[ilink];
-                link_transport_connection(oprod_along_path[ilink], oprod_along_path[ilink+1], mat_tmp_work, dir, links);
-            }
+
+        int j = length - 1; 
+        int k = GOES_BACKWARDS(this_path->dir[0]) ? 1 : 0;
+        for (int ilink = j; ilink >= k; --ilink) {
+            int src_layer = length - ilink - 1;
+            int dst_layer = length - ilink;
+            int dir = this_path->dir[ilink];
+            link_transport_connection(oprod_along_path[src_layer], oprod_along_path[dst_layer], mat_tmp_work, dir, links);
         }
 
         /*

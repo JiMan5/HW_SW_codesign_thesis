@@ -172,6 +172,15 @@ int walk_netbackdir(int start_idx, int netbackdir)
     return site_index_from_coords(x,y,z,t);
 }
 
+void print_su3(const su3_matrix *m) {
+    for(int r=0;r<3;r++){
+        for(int c=0;c<3;c++){
+            printf(" (%g,%g)", m->e[r][c].real, m->e[r][c].imag);
+        }
+        printf("\n");
+    }
+}
+
 void 
 fermion_force_fn_multi( Real eps, Real *residues, 
 			su3_vector **multi_x, int nterms, int prec,
@@ -326,11 +335,6 @@ fermion_force_fn_multi( Real eps, Real *residues,
           cleanup_gather(mtag[k]);
 	  k=1-k; // swap 0 and 1
         } /* end loop over terms in rational function expansion */
-
-        char fname[128];
-        snprintf(fname, sizeof(fname), "cpu_oprod_path_%03d.bin", ipath);
-        dump_matrix_array_cpu(fname, oprod_along_path[0]);
-        printf("[CPU] dumped %s\n", fname);
 //tempflops+=54*nterms;
 //tempflops+=36*nterms;
     }
@@ -363,6 +367,7 @@ fermion_force_fn_multi( Real eps, Real *residues,
 //tempflops+=9*22;
     }
 
+
    /* maintain an array of transports "to this point" along the path.
 	Don't recompute beginning parts of path if same as last path */
     ilink=0; // first link where new transport is needed
@@ -386,6 +391,7 @@ fermion_force_fn_multi( Real eps, Real *residues,
       }
       else { // ilink != 0
         dir = OPP_DIR(this_path->dir[ilink]);
+        printf("ftasame edw\n\n");
         link_transport_connection( mats_along_path[ilink],
         mats_along_path[ilink+1], mat_tmp0, dir  );
 //tempflops+=9*22;

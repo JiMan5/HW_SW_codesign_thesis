@@ -3,6 +3,7 @@
 #include <math.h>
 #include "ff_headers.h"
 
+
 int main(void) {
 
     //inputs reads
