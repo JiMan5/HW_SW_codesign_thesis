@@ -16,6 +16,33 @@ void dump_matrix_array(const char *fname, su3_matrix *arr) {
     printf("Dumped oprod_along_path[0] for path %d\n", ipath);
     */
 
+    //FOR DEBUG
+      /*if(ipath==158){
+            printf("path ---> (");
+            for(int j=0; j<length; j++){
+                printf("%d ", this_path->dir[j]);
+            }
+            printf(")\n");
+        int countertemp = 0;
+        for (size_t i = 0; i < 10; ++i) {
+          countertemp++;
+          int test = i * 12345 % SITES_ON_NODE; // pseudo-random
+          //int nbrs = walk_dir(test, dir);
+          int x,y,z,t;
+          coords_from_site_index(test, &x,&y,&z,&t);
+          //coords_from_site_index(nbrs,&xn,&yn,&zn,&tn);
+          printf("i=%d site=(%d,%d,%d,%d) "
+              "\n",
+              test, x,y,z,t);
+
+          printf("oprod_along_path[%d][%d] = ", length, test);print_su3(&oprod_along_path[length][test]);
+          if(countertemp==10){
+              printf("countertemp = %d\n", countertemp); 
+          }
+        }
+        exit(0);
+      }*/
+
 void fermion_force_fn_multi_hw_friendly(
     int *netbackdirs_table,
     Real *residues,               //size NTERMS
@@ -62,13 +89,16 @@ void fermion_force_fn_multi_hw_friendly(
                 su3_projector(&multi_x[term][i], &multi_x[term][nbr], &tmat);
                 scalar_mult_add_su3_matrix(&oprod_along_path[0][i], &tmat, residues[term], &oprod_along_path[0][i]);
             }
-        }
+        }        
 
         //hw friendly oso ginetai static for loop path. Tha mporoysa isws na kanw presort ta paths me to length toys akrivws kai na treksw 3 diaforetikes loopes. TBD
 
         int j = length - 1; 
-        int k = GOES_BACKWARDS(this_path->dir[0]) ? 1 : 0;
-        for (int ilink = j; ilink >= k; --ilink) {
+        int k = GOES_BACKWARDS(dir0) ? 1 : 0;
+        for (int ilink = MAX_PATH_LENGTH - 1; ilink >= 0; --ilink) {
+            if (ilink > j) continue;
+            if (ilink < k) continue;
+
             int src_layer = length - ilink - 1;
             int dst_layer = length - ilink;
             int dir = this_path->dir[ilink];

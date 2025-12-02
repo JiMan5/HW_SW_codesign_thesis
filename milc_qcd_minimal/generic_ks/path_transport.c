@@ -329,7 +329,7 @@ void link_transport_connection( su3_matrix *src, su3_matrix *dest,
     else{ /* GOES_BACKWARDS(dir) */
 	  int countertemp = 0;
       FORALLSITES_OMP(i,s,){
-		if(i<20 && dir==7){
+		/*if(i<20 && dir==7){
 			countertemp++;
 			int test = i * 12345 % sites_on_node; // pseudo-random
 			s = &lattice[test];
@@ -348,7 +348,7 @@ void link_transport_connection( su3_matrix *src, su3_matrix *dest,
 				printf("countertemp = %d\n", countertemp); 
 				exit(0);
 			} 
-		}
+		}*/
 	    mult_su3_an( &(s->link[OPP_DIR(dir)]),
 		&(src[i]), &(work[i]) );
       } END_LOOP_OMP;

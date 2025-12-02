@@ -411,19 +411,16 @@ void print_su3(const su3_matrix *m) {
 void link_transport_connection(su3_matrix *src, su3_matrix *dest, su3_matrix *work, int dir, su3_matrix (*links)[4]){
 
     if (GOES_FORWARDS(dir)) {
-        //forw: dest[i] = U_dir(i) * src[i + dir]
         for (size_t i = 0; i < SITES_ON_NODE; ++i) {
             int nbr = walk_dir(i, dir);
             mult_su3_nn(&links[i][dir], &src[nbr], &dest[i]);
         }
     } 
     else {
-        //backwards movement
-        //work[i]
         int odir = OPP_DIR(dir);
         int countertemp = 0;
         for (size_t i = 0; i < SITES_ON_NODE; ++i) {
-            if(i<20 && dir == 7){
+            /*if(i<20 && dir == 7){
                 countertemp++;
                 int test = i * 12345 % SITES_ON_NODE; // pseudo-random
                 //int nbrs = walk_dir(test, dir);
@@ -440,7 +437,7 @@ void link_transport_connection(su3_matrix *src, su3_matrix *dest, su3_matrix *wo
                     printf("countertemp = %d\n", countertemp); 
                     exit(0);
                 } 
-            }
+            }*/
             mult_su3_an(&links[i][odir], &src[i], &work[i]);
         }
     
