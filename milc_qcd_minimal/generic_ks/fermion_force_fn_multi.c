@@ -406,6 +406,33 @@ fermion_force_fn_multi( Real eps, Real *residues,
       }
     } // end loop over links
 
+    //DEBUG EEE
+    /*if(ipath == 98){
+    int countertemp = 0;
+    printf("path ---> (");
+    for(int j = 0; j < length; j++){
+        printf("%d ", this_path->dir[j]);
+    }
+    printf(")\n");
+
+    for(size_t i = 0; i < 10; ++i){
+        countertemp++;
+        int test = i * 12345 % SITES_ON_NODE;
+        int x, y, z, t;
+        coords_from_site_index(test, &x, &y, &z, &t);
+
+        printf("i=%d site=(%d,%d,%d,%d)\n", test, x, y, z, t);
+
+        printf("mats_along_path[%d][%d] = ", length, test);
+        print_su3(&mats_along_path[length][test]);
+
+        if(countertemp == 10){
+            printf("countertemp = %d\n", countertemp);
+        }
+    }
+    exit(0);
+}*/
+
     /* A path has (length+1) points, counting the ends.  At first
 	 point, no "down" direction links have their momenta "at this
 	 point". At last, no "up" ... */

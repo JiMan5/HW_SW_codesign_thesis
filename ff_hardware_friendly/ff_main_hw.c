@@ -38,6 +38,16 @@ int main(void) {
             idx++;
         }
     }
+
+    for(int ipath = 0; ipath<FORW_Q_PATHS; ipath++){
+        if(qpaths_forward[ipath].length == 1){
+            printf("path no %d ---> (", ipath);
+            for(int j = 0; j < qpaths_forward[ipath].length; j++){
+                printf("%d ", qpaths_forward[ipath].dir[j]);
+            }
+            printf(")\n");
+        }
+    }
     
     //call the hw_friendly function
     fermion_force_fn_multi_hw_friendly(netbackdir_table, residues, multi_x, qpaths_forward, links, mom_main);

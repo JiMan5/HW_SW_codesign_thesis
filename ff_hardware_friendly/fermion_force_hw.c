@@ -73,8 +73,10 @@ void fermion_force_fn_multi_hw_friendly(
 
     for (int ipath = 0; ipath < FORW_Q_PATHS; ++ipath) {
         const Q_path *this_path = &q_paths_forward[ipath];
-        int dir0  = this_path->dir[0]; //for first link of path later
         int length = this_path->length;
+        int dir0  = this_path->dir[0]; //for first link of path later
+        int odir0 = OPP_DIR(dir0);
+        int dirlast = this_path->dir[length-1]; //for last link of path later
         Real coeff = ferm_epsilon * this_path->coeff;
 
         //clear junk data
@@ -91,7 +93,6 @@ void fermion_force_fn_multi_hw_friendly(
             }
         }        
 
-        //hw friendly oso ginetai static for loop path. Tha mporoysa isws na kanw presort ta paths me to length toys akrivws kai na treksw 3 diaforetikes loopes. TBD
 
         int j = length - 1; 
         int k = GOES_BACKWARDS(dir0) ? 1 : 0;
@@ -105,30 +106,56 @@ void fermion_force_fn_multi_hw_friendly(
             link_transport_connection(oprod_along_path[src_layer], oprod_along_path[dst_layer], mat_tmp_work, dir, links);
         }
 
-        /*
+    
         //first link of path
         if (GOES_FORWARDS(dir0)){
-            //forward means use adjoint of link from neighbor in opposite direction
             for (size_t i = 0; i < SITES_ON_NODE; ++i) {
-                //step one site backward along this axis
-                int nbr = neighbor_index_axis((int)i, dir0, 1, -1);
+                int nbr = walk_dir((int)i, OPP_DIR(dir0));
                 su3_adjoint(&links[nbr][dir0], &mats_along_path[1][i]);
             }
         } 
         else { //backward means take opposite link directly
             for (size_t i = 0; i < SITES_ON_NODE; ++i) {
-                mats_along_path[1][i] = links[i][OPP_DIR(dir0)];
+                mats_along_path[1][i] = links[i][odir0];
             }
         }
 
         //remaining links 
+        k = GOES_FORWARDS(dirlast) ? (length - 1) : length;
         for (int ilink = 1; ilink < MAX_PATH_LENGTH; ++ilink) {
-            if (ilink < length) {
-                int dir = OPP_DIR(this_path->dir[ilink]);
-                link_transport_connection( mats_along_path[ilink], mats_along_path[ilink + 1], mat_tmp_work, dir, links);
-            }
+            if (ilink >= k || k == 0) continue;
+            int dir = OPP_DIR(this_path->dir[ilink]);
+            printf("mpika%d???\n", ipath);
+            link_transport_connection( mats_along_path[ilink], mats_along_path[ilink + 1], mat_tmp_work, dir, links);
         }
 
+        /*if(ipath == 98){
+            int countertemp = 0;
+            printf("path ---> (");
+            for(int j = 0; j < length; j++){
+                printf("%d ", this_path->dir[j]);
+            }
+            printf(")\n");
+
+            for(size_t i = 0; i < 10; ++i){
+                countertemp++;
+                int test = i * 12345 % SITES_ON_NODE;
+                int x, y, z, t;
+                coords_from_site_index(test, &x, &y, &z, &t);
+
+                printf("i=%d site=(%d,%d,%d,%d)\n", test, x, y, z, t);
+
+                printf("mats_along_path[%d][%d] = ", length, test);
+                print_su3(&mats_along_path[length][test]);
+
+                if(countertemp == 10){
+                    printf("countertemp = %d\n", countertemp);
+                }
+            }
+            exit(0);
+        }*/
+
+        
         //edw we walk along each link of the path and we accumulate contributions into force_accum
 
         int lastdir_local = NODIR; // no previous direction initially
@@ -193,6 +220,7 @@ void fermion_force_fn_multi_hw_friendly(
 
     } // end ipath loop
 
+    /*
     // 2) Add force_accum into mom (uncompress -> add -> compress)
     for (int d = XUP; d <= TUP; ++d) {
         for (size_t i = 0; i < SITES_ON_NODE; ++i) {

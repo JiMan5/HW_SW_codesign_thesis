@@ -420,24 +420,6 @@ void link_transport_connection(su3_matrix *src, su3_matrix *dest, su3_matrix *wo
         int odir = OPP_DIR(dir);
         int countertemp = 0;
         for (size_t i = 0; i < SITES_ON_NODE; ++i) {
-            /*if(i<20 && dir == 7){
-                countertemp++;
-                int test = i * 12345 % SITES_ON_NODE; // pseudo-random
-                //int nbrs = walk_dir(test, dir);
-                int x,y,z,t;
-                coords_from_site_index(test, &x,&y,&z,&t);
-                //coords_from_site_index(nbrs,&xn,&yn,&zn,&tn);
-                printf("FWD dir=%d odir = %d i=%d site=(%d,%d,%d,%d) "
-                    "\n",
-                    dir, odir, test, x,y,z,t);
-
-                printf("U ");print_su3(&links[test][odir]);
-                printf("src");print_su3(&src[test]);
-                if(countertemp==20){
-                    printf("countertemp = %d\n", countertemp); 
-                    exit(0);
-                } 
-            }*/
             mult_su3_an(&links[i][odir], &src[i], &work[i]);
         }
     
