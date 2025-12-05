@@ -481,6 +481,37 @@ fermion_force_fn_multi( Real eps, Real *residues,
     } /* end loop over links in path */
     last_netbackdir = netbackdir;
     last_path = &(q_paths_sorted[ipath]);
+
+    //DEBUG AGAIN
+      /*if(ipath == 99){
+            int countertemp = 0;
+            printf("path ---> (");
+            for(int j = 0; j < length; j++){
+                printf("%d ", this_path->dir[j]);
+            }
+            printf(")\n");
+
+            for(int d = 0; d < 4; d++){
+                printf("force_accum direction %d:\n", d);
+                countertemp = 0;
+                for(size_t i = 0; i < 10; ++i){
+                    countertemp++;
+                    int test = i * 12345 % sites_on_node;
+                    int x, y, z, t;
+                    coords_from_site_index(test, &x, &y, &z, &t);
+
+                    printf("i=%d site=(%d,%d,%d,%d)\n", test, x, y, z, t);
+                    printf("force_accum[%d][%d] = ", d, test);
+                    print_su3(&force_accum[d][test]);
+
+                    if(countertemp == 10){
+                        printf("countertemp = %d\n", countertemp);
+                    }
+                }
+                printf("\n");
+            }
+            exit(0);
+        }*/
   } /* end loop over paths */ 
       
 
@@ -490,8 +521,42 @@ fermion_force_fn_multi( Real eps, Real *residues,
      add_su3_matrix( &tmat2, &(force_accum[dir][i]), &tmat2 );
      make_anti_hermitian( &tmat2, &(s->mom[dir]) );
   }
-//tempflops+=4*18;
-//tempflops+=4*18;
+
+  //DEBUG AGAIN
+  {
+    int countertemp = 0;
+
+    for (int dir = 0; dir < 4; dir++) {
+        printf("mom direction %d:\n", dir);
+        countertemp = 0;
+
+        for (size_t n = 0; n < 10; ++n) {
+            countertemp++;
+            int test = (int)(n * 12345 % SITES_ON_NODE);
+
+            int x, y, z, t;
+            coords_from_site_index(test, &x, &y, &z, &t);
+
+            printf("i=%d site=(%d,%d,%d,%d)\n", test, x, y, z, t);
+
+            anti_hermitmat *M = &(lattice[test].mom[dir]);
+
+            printf("mom[%d][%d] = ", dir, test);
+            printf("(%g,%g) (%g,%g) (%g,%g)  %g %g %g\n",
+                   M->m01.real, M->m01.imag,
+                   M->m02.real, M->m02.imag,
+                   M->m12.real, M->m12.imag,
+                   M->m00im, M->m11im, M->m22im);
+
+            if (countertemp == 10) {
+                printf("countertemp = %d\n", countertemp);
+            }
+        }
+        printf("\n");
+    }
+
+    exit(0);
+}
 
 /*if(!ff_first_call_logged) {
   write_all_mom("ff_mom_after.bin");
