@@ -172,6 +172,15 @@ int walk_netbackdir(int start_idx, int netbackdir)
     return site_index_from_coords(x,y,z,t);
 }
 
+void print_su3(const su3_matrix *m) {
+    for(int r=0;r<3;r++){
+        for(int c=0;c<3;c++){
+            printf(" (%g,%g)", m->e[r][c].real, m->e[r][c].imag);
+        }
+        printf("\n");
+    }
+}
+
 void 
 fermion_force_fn_multi( Real eps, Real *residues, 
 			su3_vector **multi_x, int nterms, int prec,
@@ -299,7 +308,10 @@ fermion_force_fn_multi( Real eps, Real *residues,
   last_path = NULL;
   for( ipath=0; ipath<num_q_paths; ipath++ ){
     this_path = &(q_paths_sorted[ipath]);
-    if(this_path->forwback== -1)continue;	/* skip backwards dslash */
+    if(this_path->forwback== -1){
+      printf("kako ipath = %d\n", ipath);
+      continue;	/* skip backwards dslash */
+    }
 
     length = this_path->length;
     // find gather to bring multi_x[term] from "this site" to end of path
@@ -326,32 +338,8 @@ fermion_force_fn_multi( Real eps, Real *residues,
           cleanup_gather(mtag[k]);
 	  k=1-k; // swap 0 and 1
         } /* end loop over terms in rational function expansion */
-
-        char fname[128];
-        snprintf(fname, sizeof(fname), "cpu_oprod_path_%03d.bin", ipath);
-        dump_matrix_array_cpu(fname, oprod_along_path[0]);
-        printf("[CPU] dumped %s\n", fname);
-//tempflops+=54*nterms;
-//tempflops+=36*nterms;
     }
 
-    /* path transport the outer product, or projection matrix, of multi_x[term]
-       (EVEN sites)  and Dslash*multi_x[term] (ODD sites) from far end.
-
-       maintain a matrix of the outer product transported backwards
-	along the path to all sites on the path.
-	If new "net displacement", need to completely recreate it.
-	Otherwise, use as much of the previous path as possible 
-
-	Note this array is indexed backwards - the outer product transported
-	to site number n along the path is in oprod_along_path[length-n].
-	This makes reusing it for later paths easier.
-
-	Sometimes we need this at the start point of the path, and sometimes
-	one link into the path, so don't always have to do the last link. */
-
-    // figure out how much of the outer products along the path must be
-    // recomputed. j is last one needing recomputation. k is first one.
     j=length-1; // default is recompute all
     if( netbackdir == last_netbackdir )
       while ( j>0 && this_path->dir[j] == last_path->dir[j+last_path->length-length] ) j--;
@@ -362,6 +350,31 @@ fermion_force_fn_multi( Real eps, Real *residues,
       oprod_along_path[length-ilink], mat_tmp0, this_path->dir[ilink]  );
 //tempflops+=9*22;
     }
+        /*if(ipath==158){
+        int countertemp = 0;
+        printf("path ---> (");
+            for(int j=0; j<length; j++){
+                printf("%d ", this_path->dir[j]);
+            }
+            printf(")\n");
+        for (size_t i = 0; i < 10; ++i) {
+          countertemp++;
+          int test = i * 12345 % sites_on_node; // pseudo-random
+          //int nbrs = walk_dir(test, dir);
+          int x,y,z,t;
+          coords_from_site_index(test, &x,&y,&z,&t);
+          //coords_from_site_index(nbrs,&xn,&yn,&zn,&tn);
+          printf("i=%d site=(%d,%d,%d,%d) "
+              "\n",
+              test, x,y,z,t);
+
+          printf("oprod_along_path[%d][%d] = ", length, test);print_su3(&oprod_along_path[length][test]);
+          if(countertemp==10){
+              printf("countertemp = %d\n", countertemp); 
+          }
+        }
+        exit(0);
+      }*/
 
    /* maintain an array of transports "to this point" along the path.
 	Don't recompute beginning parts of path if same as last path */
@@ -386,11 +399,39 @@ fermion_force_fn_multi( Real eps, Real *residues,
       }
       else { // ilink != 0
         dir = OPP_DIR(this_path->dir[ilink]);
+        //printf("ftasame edw\n\n");
         link_transport_connection( mats_along_path[ilink],
         mats_along_path[ilink+1], mat_tmp0, dir  );
 //tempflops+=9*22;
       }
     } // end loop over links
+
+    //DEBUG EEE
+    /*if(ipath == 98){
+    int countertemp = 0;
+    printf("path ---> (");
+    for(int j = 0; j < length; j++){
+        printf("%d ", this_path->dir[j]);
+    }
+    printf(")\n");
+
+    for(size_t i = 0; i < 10; ++i){
+        countertemp++;
+        int test = i * 12345 % SITES_ON_NODE;
+        int x, y, z, t;
+        coords_from_site_index(test, &x, &y, &z, &t);
+
+        printf("i=%d site=(%d,%d,%d,%d)\n", test, x, y, z, t);
+
+        printf("mats_along_path[%d][%d] = ", length, test);
+        print_su3(&mats_along_path[length][test]);
+
+        if(countertemp == 10){
+            printf("countertemp = %d\n", countertemp);
+        }
+    }
+    exit(0);
+}*/
 
     /* A path has (length+1) points, counting the ends.  At first
 	 point, no "down" direction links have their momenta "at this
@@ -440,7 +481,39 @@ fermion_force_fn_multi( Real eps, Real *residues,
     } /* end loop over links in path */
     last_netbackdir = netbackdir;
     last_path = &(q_paths_sorted[ipath]);
-  } /* end loop over paths */
+
+    //DEBUG AGAIN
+      /*if(ipath == 99){
+            int countertemp = 0;
+            printf("path ---> (");
+            for(int j = 0; j < length; j++){
+                printf("%d ", this_path->dir[j]);
+            }
+            printf(")\n");
+
+            for(int d = 0; d < 4; d++){
+                printf("force_accum direction %d:\n", d);
+                countertemp = 0;
+                for(size_t i = 0; i < 10; ++i){
+                    countertemp++;
+                    int test = i * 12345 % sites_on_node;
+                    int x, y, z, t;
+                    coords_from_site_index(test, &x, &y, &z, &t);
+
+                    printf("i=%d site=(%d,%d,%d,%d)\n", test, x, y, z, t);
+                    printf("force_accum[%d][%d] = ", d, test);
+                    print_su3(&force_accum[d][test]);
+
+                    if(countertemp == 10){
+                        printf("countertemp = %d\n", countertemp);
+                    }
+                }
+                printf("\n");
+            }
+            exit(0);
+        }*/
+  } /* end loop over paths */ 
+      
 
   // add force to momentum
   for(dir=XUP; dir<=TUP; dir++)FORALLSITES(i,s){
@@ -448,8 +521,42 @@ fermion_force_fn_multi( Real eps, Real *residues,
      add_su3_matrix( &tmat2, &(force_accum[dir][i]), &tmat2 );
      make_anti_hermitian( &tmat2, &(s->mom[dir]) );
   }
-//tempflops+=4*18;
-//tempflops+=4*18;
+
+  //DEBUG AGAIN
+  {
+    int countertemp = 0;
+
+    for (int dir = 0; dir < 4; dir++) {
+        printf("mom direction %d:\n", dir);
+        countertemp = 0;
+
+        for (size_t n = 0; n < 10; ++n) {
+            countertemp++;
+            int test = (int)(n * 12345 % SITES_ON_NODE);
+
+            int x, y, z, t;
+            coords_from_site_index(test, &x, &y, &z, &t);
+
+            printf("i=%d site=(%d,%d,%d,%d)\n", test, x, y, z, t);
+
+            anti_hermitmat *M = &(lattice[test].mom[dir]);
+
+            printf("mom[%d][%d] = ", dir, test);
+            printf("(%g,%g) (%g,%g) (%g,%g)  %g %g %g\n",
+                   M->m01.real, M->m01.imag,
+                   M->m02.real, M->m02.imag,
+                   M->m12.real, M->m12.imag,
+                   M->m00im, M->m11im, M->m22im);
+
+            if (countertemp == 10) {
+                printf("countertemp = %d\n", countertemp);
+            }
+        }
+        printf("\n");
+    }
+
+    exit(0);
+}
 
 /*if(!ff_first_call_logged) {
   write_all_mom("ff_mom_after.bin");

@@ -399,25 +399,30 @@ int sort_quark_paths( Q_path *src_table, Q_path *dest_table, int npaths ){
 
 /////////////////////////////////////////////////////////////////////////
 
-
+void print_su3(const su3_matrix *m) {
+    for(int r=0;r<3;r++){
+        for(int c=0;c<3;c++){
+            printf(" (%g,%g)", m->e[r][c].real, m->e[r][c].imag);
+        }
+        printf("\n");
+    }
+}
 //link_transport_connection
 void link_transport_connection(su3_matrix *src, su3_matrix *dest, su3_matrix *work, int dir, su3_matrix (*links)[4]){
 
     if (GOES_FORWARDS(dir)) {
-        //forw: dest[i] = U_dir(i) * src[i + dir]
         for (size_t i = 0; i < SITES_ON_NODE; ++i) {
-            int nbr = walk_dir((int)i, dir);   // i + 1 along axis
+            int nbr = walk_dir(i, dir);
             mult_su3_nn(&links[i][dir], &src[nbr], &dest[i]);
         }
     } 
     else {
-        //backwards movement
-        //work[i]
         int odir = OPP_DIR(dir);
+        int countertemp = 0;
         for (size_t i = 0; i < SITES_ON_NODE; ++i) {
             mult_su3_an(&links[i][odir], &src[i], &work[i]);
         }
-        //dest[i] = work[i - 1 along axis]  (i + (-1) step)
+    
         for (size_t i = 0; i < SITES_ON_NODE; ++i) {
             int nbr = walk_dir((int)i, dir);
             dest[i] = work[nbr];

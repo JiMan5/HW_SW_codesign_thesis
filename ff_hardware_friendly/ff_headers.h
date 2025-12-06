@@ -124,7 +124,7 @@ void fermion_force_fn_multi_hw_friendly(
     su3_matrix (*links)[4],       
     anti_hermitmat (*mom)[4]      
 );
-
+void print_su3(const su3_matrix *m);
 //link_transport_connection
 //void link_transport_connection(const su3_matrix *src, su3_matrix *dest, su3_matrix *work, int dir, su3_matrix (*links)[4]);
 void link_transport_connection(su3_matrix *src, su3_matrix *dest, su3_matrix *work, int dir, su3_matrix (*links)[4]);
