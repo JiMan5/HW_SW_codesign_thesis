@@ -15,17 +15,28 @@ Real *read_residues(const char *fname) {
 
 
 //multi_x read
-su3_vector **read_multi_x(const char *fname) {
+su3_vector (*read_multi_x(const char *fname))[SITES_ON_NODE]
+{
     FILE *f = fopen(fname, "rb");
-    if(!f){ perror(fname); exit(1); }
-    su3_vector **multi_x = malloc(sizeof(su3_vector*) * NTERMS);
-    for(int t = 0; t < NTERMS; t++) {
-        multi_x[t] = malloc(sizeof(su3_vector) * SITES_ON_NODE);
-        fread(multi_x[t], sizeof(su3_vector), SITES_ON_NODE, f);
+    if (!f) { perror(fname); exit(1); }
+
+    su3_vector (*multi_x)[SITES_ON_NODE] =
+        malloc(NTERMS * sizeof(*multi_x));
+    if (!multi_x) { perror("malloc multi_x"); exit(1); }
+
+    for (int t = 0; t < NTERMS; t++) {
+        if (fread(multi_x[t], sizeof(su3_vector),
+                  SITES_ON_NODE, f) != SITES_ON_NODE)
+        {
+            perror("read_multi_x");
+            exit(1);
+        }
     }
+
     fclose(f);
-    printf("read multi_x (nterms = %d, sites = %lu)\n",
+    printf("read multi_x (nterms=%d, sites=%lu)\n",
            NTERMS, (unsigned long)SITES_ON_NODE);
+
     return multi_x;
 }
 
@@ -159,13 +170,93 @@ int sort_quark_paths( Q_path *src_table, Q_path *dest_table, int npaths ){
     return 0;
 } /* sort_quark_paths */
 
+//returns memory index of a given (x,y,z,t) coordinate
+int site_index_from_coords(int x, int y, int z, int t)
+{
+    int ir = x + NX*(y + NY*(z + NZ*t));       // lexicographic, x-fastest
+
+    int parity = (x + y + z + t) & 1;          // 0 = EVEN, 1 = ODD
+
+    if(parity == 0)
+        return ir >> 1;                        // EVEN block: ir/2
+    else
+        return (ir + SITES_ON_NODE) >> 1;      // ODD block: (ir+N)/2
+}
+
+ void coords_from_site_index(int idx, int *x, int *y, int *z, int *t)
+{
+    int neven = (int)(SITES_ON_NODE >> 1);
+    int p_block = (idx < neven) ? 0 : 1;          // 0: even block, 1: odd block
+    int ib = (idx < neven) ? idx : (idx - neven);       // index within the parity block
+
+    int nX2   = NX >> 1;                          // NX/2
+    int slab  = nX2;                              // per y
+    int row   = nX2 * NY;                         // per z
+    int plane = nX2 * NY * NZ;                    // per t
+
+    *t = ib / plane;    ib -= (*t) * plane;
+    *z = ib / row;      ib -= (*z) * row;
+    *y = ib / slab;
+    int x2 = ib - (*y) * slab;                    // == ib % slab
+
+    int parity_yzt = ((*y + *z + *t) & 1);
+    int add = (p_block ^ parity_yzt);             // 0 -> even x, 1 -> odd x
+    *x = (x2 << 1) + add;                               // x = 2*x2 + add
+}
+
+int walk_dir(int start_idx, int dir)
+{
+    int x,y,z,t;
+    coords_from_site_index(start_idx, &x, &y, &z, &t);
+
+    switch(dir) {
+        case XUP:   x = (x + 1) % NX; break;
+        case XDOWN: x = (x - 1 + NX) % NX; break;
+        case YUP:   y = (y + 1) % NY; break;
+        case YDOWN: y = (y - 1 + NY) % NY; break;
+        case ZUP:   z = (z + 1) % NZ; break;
+        case ZDOWN: z = (z - 1 + NZ) % NZ; break;
+        case TUP:   t = (t + 1) % NT_SITES; break;
+        case TDOWN: t = (t - 1 + NT_SITES) % NT_SITES; break;
+
+        case X3UP:    x = (x + 3) % NX; break;
+        case X3DOWN:  x = (x - 3 + NX) % NX; break;
+        case Y3UP:    y = (y + 3) % NY; break;
+        case Y3DOWN:  y = (y - 3 + NY) % NY; break;
+        case Z3UP:    z = (z + 3) % NZ; break;
+        case Z3DOWN:  z = (z - 3 + NZ) % NZ; break;
+        case T3UP:    t = (t + 3) % NT_SITES; break;
+        case T3DOWN:  t = (t - 3 + NT_SITES) % NT_SITES; break;
+    }
+
+    return site_index_from_coords(x,y,z,t);
+}
+
+int (*create_nbr_table(void))[16]
+{
+    int (*nbr_table)[16] = malloc(SITES_ON_NODE * sizeof *nbr_table);
+    if (!nbr_table) { perror("malloc nbr_table"); exit(1); }
+
+    for (size_t i = 0; i < SITES_ON_NODE; i++) {
+        for (int d = 0; d < 16; d++) {
+            nbr_table[i][d] = walk_dir((int)i, d);
+        }
+    }
+
+    printf("Neighbor table created. Sites = %lu, directions = 16\n",
+           (unsigned long)SITES_ON_NODE);
+
+    return nbr_table;
+}
+
 
 int main(void) {
 
     //inputs reads
     int *netbackdir_table = (int *)malloc( FORW_Q_PATHS * sizeof(int) );
     Real *residues = NULL;
-    su3_vector **multi_x = NULL;
+    //su3_vector **multi_x = NULL;
+    su3_vector (*multi_x)[SITES_ON_NODE] = NULL;
     Q_path *q_paths = NULL;
     Q_path *qpaths_forward = malloc(sizeof(Q_path) * FORW_Q_PATHS); //only with forwback == 1
     Q_path *qpaths_sorted = malloc(sizeof(Q_path) * NUM_Q_PATHS);
@@ -196,17 +287,10 @@ int main(void) {
         }
     }
 
-    for(ipath = 0; ipath<FORW_Q_PATHS; ipath++){
-        if(qpaths_forward[ipath].length == 1){
-            printf("path no %d ---> (", ipath);
-            for(j = 0; j < qpaths_forward[ipath].length; j++){
-                printf("%d ", qpaths_forward[ipath].dir[j]);
-            }
-            printf(")\n");
-        }
-    }
+    int (*nbr_table)[16] = create_nbr_table();
+
     //call the hw_friendly function
-    fermion_force_fn_multi_hw_friendly(netbackdir_table, residues, multi_x, qpaths_forward, links, mom_main);
+    fermion_force_fn_multi_hw_friendly(netbackdir_table, residues, multi_x, qpaths_forward, links, mom_main, nbr_table);
     printf("Finished with the hw_friendly call!\n");
 
 
@@ -258,9 +342,6 @@ int main(void) {
 
     int t;
     free(residues);
-    for(t=0; t<NTERMS; t++) {
-        free(multi_x[t]);
-    }
     free(multi_x);
     free(q_paths);
     free(qpaths_sorted);
