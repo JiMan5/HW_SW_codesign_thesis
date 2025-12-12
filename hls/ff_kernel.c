@@ -146,75 +146,14 @@ void make_anti_hermitian( su3_matrix *m3, anti_hermitmat *ah3 ) {
 
 }/* make_anti_hermitian */
 
-//returns memory index of a given (x,y,z,t) coordinate
-int site_index_from_coords(int x, int y, int z, int t)
-{
-    int ir = x + NX*(y + NY*(z + NZ*t));       // lexicographic, x-fastest
-
-    int parity = (x + y + z + t) & 1;          // 0 = EVEN, 1 = ODD
-
-    if(parity == 0)
-        return ir >> 1;                        // EVEN block: ir/2
-    else
-        return (ir + SITES_ON_NODE) >> 1;      // ODD block: (ir+N)/2
-}
-
- void coords_from_site_index(int idx, int *x, int *y, int *z, int *t)
-{
-    int neven = (int)(SITES_ON_NODE >> 1);
-    int p_block = (idx < neven) ? 0 : 1;          // 0: even block, 1: odd block
-    int ib = (idx < neven) ? idx : (idx - neven);       // index within the parity block
-
-    int nX2   = NX >> 1;                          // NX/2
-    int slab  = nX2;                              // per y
-    int row   = nX2 * NY;                         // per z
-    int plane = nX2 * NY * NZ;                    // per t
-
-    *t = ib / plane;    ib -= (*t) * plane;
-    *z = ib / row;      ib -= (*z) * row;
-    *y = ib / slab;
-    int x2 = ib - (*y) * slab;                    // == ib % slab
-
-    int parity_yzt = ((*y + *z + *t) & 1);
-    int add = (p_block ^ parity_yzt);             // 0 -> even x, 1 -> odd x
-    *x = (x2 << 1) + add;                               // x = 2*x2 + add
-}
-
-int walk_dir(int start_idx, int dir)
-{
-    int x,y,z,t;
-    coords_from_site_index(start_idx, &x, &y, &z, &t);
-
-    switch(dir) {
-        case XUP:   x = (x + 1) % NX; break;
-        case XDOWN: x = (x - 1 + NX) % NX; break;
-        case YUP:   y = (y + 1) % NY; break;
-        case YDOWN: y = (y - 1 + NY) % NY; break;
-        case ZUP:   z = (z + 1) % NZ; break;
-        case ZDOWN: z = (z - 1 + NZ) % NZ; break;
-        case TUP:   t = (t + 1) % NT_SITES; break;
-        case TDOWN: t = (t - 1 + NT_SITES) % NT_SITES; break;
-
-        case X3UP:    x = (x + 3) % NX; break;
-        case X3DOWN:  x = (x - 3 + NX) % NX; break;
-        case Y3UP:    y = (y + 3) % NY; break;
-        case Y3DOWN:  y = (y - 3 + NY) % NY; break;
-        case Z3UP:    z = (z + 3) % NZ; break;
-        case Z3DOWN:  z = (z - 3 + NZ) % NZ; break;
-        case T3UP:    t = (t + 3) % NT_SITES; break;
-        case T3DOWN:  t = (t - 3 + NT_SITES) % NT_SITES; break;
-    }
-
-    return site_index_from_coords(x,y,z,t);
-}
-
 //link_transport_connection
-void link_transport_connection(su3_matrix *src, su3_matrix *dest, su3_matrix *work, int dir, su3_matrix (*links)[4]){
+void link_transport_connection(su3_matrix *src, su3_matrix *dest, su3_matrix *work, int dir, su3_matrix (*links)[4], int lookups[SITES_ON_NODE]){
 
 	size_t i;
     if (GOES_FORWARDS(dir)) {
         for (i = 0; i < SITES_ON_NODE; ++i) {
-            int nbr = walk_dir(i, dir);
+        	int nbr = lookups[i].nbr[dir];
+            //int nbr = nbr_table[i][dir];
             mult_su3_nn(&links[i][dir], &src[nbr], &dest[i]);
         }
     }
@@ -225,7 +164,8 @@ void link_transport_connection(su3_matrix *src, su3_matrix *dest, su3_matrix *wo
         }
 
         for (i = 0; i < SITES_ON_NODE; ++i) {
-            int nbr = walk_dir((int)i, dir);
+        	int nbr = lookups[i].nbr[dir];
+            //int nbr = nbr_table[(int)i][dir];
             dest[i] = work[nbr];
         }
     }
@@ -233,12 +173,13 @@ void link_transport_connection(su3_matrix *src, su3_matrix *dest, su3_matrix *wo
 
 
 void fermion_force_fn_multi_hw_friendly(
-    int *netbackdirs_table,
-    Real *residues,               //size NTERMS
-    su3_vector **multi_x,         //[NTERMS][SITES_ON_NODE]
-    Q_path *q_paths_forward,      //[FORW_Q_PATHS] (only forward paths)
-    su3_matrix (*links)[4],       //[SITES_ON_NODE][4]
-    anti_hermitmat (*mom)[4]      //[SITES_ON_NODE][4] (packed)
+    int netbackdirs_table[FORW_Q_PATHS],
+    Real residues[NTERMS],
+    su3_vector multi_x[NTERMS][SITES_ON_NODE],
+    Q_path q_paths_forward[FORW_Q_PATHS],
+    su3_matrix links[SITES_ON_NODE][4],
+    anti_hermitmat mom[SITES_ON_NODE][4],
+    lookup_t lookups[SITES_ON_NODE]
 )
 {
     //static arrays
@@ -281,7 +222,8 @@ void fermion_force_fn_multi_hw_friendly(
         //loop over terms
         for (term = 0; term < NTERMS; term++) {
             for (i = 0; i < SITES_ON_NODE; i++) {
-                int nbr = walk_dir((int)i, netbackdirs_table[ipath]);
+            	int nbr = lookups[(int)i].nbr[netbackdirs_table[ipath]];
+                //int nbr = nbr_table[(int)i][netbackdirs_table[ipath]];
                 su3_projector(&multi_x[term][i], &multi_x[term][nbr], &tmat);
                 scalar_mult_add_su3_matrix(&oprod_along_path[0][i], &tmat, residues[term], &oprod_along_path[0][i]);
             }
@@ -297,14 +239,15 @@ void fermion_force_fn_multi_hw_friendly(
             int src_layer = length - ilink - 1;
             int dst_layer = length - ilink;
             int dir = this_path->dir[ilink];
-            link_transport_connection(oprod_along_path[src_layer], oprod_along_path[dst_layer], mat_tmp_work, dir, links);
+            link_transport_connection(oprod_along_path[src_layer], oprod_along_path[dst_layer], mat_tmp_work, dir, links, lookups);
         }
 
 
         //first link of path
         if (GOES_FORWARDS(dir0)){
             for (i = 0; i < SITES_ON_NODE; ++i) {
-                int nbr = walk_dir((int)i, OPP_DIR(dir0));
+            	int nbr = lookups[(int)i].nbr[OPP_DIR(dir0)];
+                //int nbr = nbr_table[(int)i][OPP_DIR(dir0)];
                 su3_adjoint(&links[nbr][dir0], &mats_along_path[1][i]);
             }
         }
@@ -318,7 +261,7 @@ void fermion_force_fn_multi_hw_friendly(
         for (ilink = 1; ilink < MAX_PATH_LENGTH; ++ilink) {
             if (ilink >= k || k == 0) continue;
             int dir = OPP_DIR(this_path->dir[ilink]);
-            link_transport_connection( mats_along_path[ilink], mats_along_path[ilink + 1], mat_tmp_work, dir, links);
+            link_transport_connection( mats_along_path[ilink], mats_along_path[ilink + 1], mat_tmp_work, dir, links, lookups);
         }
 
 
@@ -330,9 +273,10 @@ void fermion_force_fn_multi_hw_friendly(
             }
 
             for (i = 0; i < SITES_ON_NODE; ++i) {
-                int x,y,z,t;
+            	int parity = lookups[i].parity;
+                /*int x,y,z,t;
                 coords_from_site_index((int)i,&x,&y,&z,&t);
-                int parity = (x+y+z+t)&1;
+                int parity = (x+y+z+t)&1;*/
 
                 Real sign = (parity==0 ? base_coeff : -base_coeff);
                 scalar_mult_add_su3_matrix(&force_accum[dir0][i], &mat_tmp_work[i], sign, &force_accum[dir0][i]);
@@ -361,9 +305,10 @@ void fermion_force_fn_multi_hw_friendly(
 
             if (dir_val && GOES_FORWARDS(dir)) {
                 for (i = 0; i < SITES_ON_NODE; ++i) {
-                    int x,y,z,t;
-                    coords_from_site_index((int)i,&x,&y,&z,&t);
-                    int parity=(x+y+z+t)&1;
+                	int parity = lookups[i].parity;
+                	/*int x,y,z,t;
+                	coords_from_site_index((int)i,&x,&y,&z,&t);
+                	int parity = (x+y+z+t)&1;*/
 
                     Real sign = (parity==0 ? coeff : -coeff);
                     scalar_mult_add_su3_matrix(&force_accum[dir][i], &mat_tmp_work[i], sign, &force_accum[dir][i]);
@@ -374,9 +319,10 @@ void fermion_force_fn_multi_hw_friendly(
                 int odir = OPP_DIR(lastdir);
 
                 for (i = 0; i < SITES_ON_NODE; ++i) {
-                    int x,y,z,t;
-                    coords_from_site_index((int)i,&x,&y,&z,&t);
-                    int parity=(x+y+z+t)&1;
+                	int parity = lookups[i].parity;
+                	/*int x,y,z,t;
+                	coords_from_site_index((int)i,&x,&y,&z,&t);
+                	int parity = (x+y+z+t)&1;*/
 
                     Real sign = (parity==0 ? -coeff : coeff);
                     scalar_mult_add_su3_matrix(&force_accum[odir][i], &mat_tmp_work[i], sign, &force_accum[odir][i]);
