@@ -76,6 +76,11 @@ typedef struct {
 #define su3_vector      fsu3_vector
 #define anti_hermitmat  fanti_hermitmat
 
+typedef struct {
+	int nbr[16];
+	int parity;
+} lookup_t;
+
 
 #define MAX_PATH_LENGTH 16
 typedef struct {

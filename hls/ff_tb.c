@@ -232,7 +232,7 @@ int walk_dir(int start_idx, int dir)
     return site_index_from_coords(x,y,z,t);
 }
 
-int (*create_nbr_table(void))[16]
+/*int (*create_nbr_table(void))[16]
 {
     int (*nbr_table)[16] = malloc(SITES_ON_NODE * sizeof *nbr_table);
     if (!nbr_table) { perror("malloc nbr_table"); exit(1); }
@@ -247,6 +247,29 @@ int (*create_nbr_table(void))[16]
            (unsigned long)SITES_ON_NODE);
 
     return nbr_table;
+}*/
+
+lookup_t *create_lookup_table(void)
+{
+    lookup_t *lookups = malloc(SITES_ON_NODE * sizeof(lookup_t));
+    if (!lookups) { perror("malloc lookups"); exit(1); }
+
+    for (size_t i = 0; i < SITES_ON_NODE; i++) {
+
+        /* compute parity */
+        int x, y, z, t;
+        coords_from_site_index((int)i, &x, &y, &z, &t);
+        lookups[i].parity = (x + y + z + t) & 1;
+
+        /* compute neighbors */
+        for (int d = 0; d < 16; d++) {
+            lookups[i].nbr[d] = walk_dir((int)i, d);
+        }
+    }
+
+    printf("lookup table created sites = %lu, struct size = %zu bytes\n", SITES_ON_NODE, sizeof(lookup_t));
+
+    return lookups;
 }
 
 
@@ -287,10 +310,11 @@ int main(void) {
         }
     }
 
-    int (*nbr_table)[16] = create_nbr_table();
+    //int (*nbr_table)[16] = create_nbr_table();
+    lookup_t *lookups = create_lookup_table();
 
     //call the hw_friendly function
-    fermion_force_fn_multi_hw_friendly(netbackdir_table, residues, multi_x, qpaths_forward, links, mom_main, nbr_table);
+    fermion_force_fn_multi_hw_friendly(netbackdir_table, residues, multi_x, qpaths_forward, links, mom_main, lookups);
     printf("Finished with the hw_friendly call!\n");
 
 

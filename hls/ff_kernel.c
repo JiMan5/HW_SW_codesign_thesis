@@ -147,12 +147,13 @@ void make_anti_hermitian( su3_matrix *m3, anti_hermitmat *ah3 ) {
 }/* make_anti_hermitian */
 
 //link_transport_connection
-void link_transport_connection(su3_matrix *src, su3_matrix *dest, su3_matrix *work, int dir, su3_matrix (*links)[4], int nbr_table[SITES_ON_NODE][16]){
+void link_transport_connection(su3_matrix *src, su3_matrix *dest, su3_matrix *work, int dir, su3_matrix (*links)[4], lookup_t lookups[SITES_ON_NODE]){
 
 	size_t i;
     if (GOES_FORWARDS(dir)) {
         for (i = 0; i < SITES_ON_NODE; ++i) {
-            int nbr = nbr_table[i][dir];
+        	int nbr = lookups[i].nbr[dir];
+            //int nbr = nbr_table[i][dir];
             mult_su3_nn(&links[i][dir], &src[nbr], &dest[i]);
         }
     }
@@ -163,7 +164,8 @@ void link_transport_connection(su3_matrix *src, su3_matrix *dest, su3_matrix *wo
         }
 
         for (i = 0; i < SITES_ON_NODE; ++i) {
-            int nbr = nbr_table[(int)i][dir];
+        	int nbr = lookups[i].nbr[dir];
+            //int nbr = nbr_table[(int)i][dir];
             dest[i] = work[nbr];
         }
     }
@@ -177,7 +179,7 @@ void fermion_force_fn_multi_hw_friendly(
     Q_path q_paths_forward[FORW_Q_PATHS],
     su3_matrix links[SITES_ON_NODE][4],
     anti_hermitmat mom[SITES_ON_NODE][4],
-    int nbr_table[SITES_ON_NODE][16]
+    lookup_t lookups[SITES_ON_NODE]
 )
 {
     //static arrays
@@ -220,7 +222,8 @@ void fermion_force_fn_multi_hw_friendly(
         //loop over terms
         for (term = 0; term < NTERMS; term++) {
             for (i = 0; i < SITES_ON_NODE; i++) {
-                int nbr = nbr_table[(int)i][netbackdirs_table[ipath]];
+            	int nbr = lookups[(int)i].nbr[netbackdirs_table[ipath]];
+                //int nbr = nbr_table[(int)i][netbackdirs_table[ipath]];
                 su3_projector(&multi_x[term][i], &multi_x[term][nbr], &tmat);
                 scalar_mult_add_su3_matrix(&oprod_along_path[0][i], &tmat, residues[term], &oprod_along_path[0][i]);
             }
@@ -236,14 +239,15 @@ void fermion_force_fn_multi_hw_friendly(
             int src_layer = length - ilink - 1;
             int dst_layer = length - ilink;
             int dir = this_path->dir[ilink];
-            link_transport_connection(oprod_along_path[src_layer], oprod_along_path[dst_layer], mat_tmp_work, dir, links, nbr_table);
+            link_transport_connection(oprod_along_path[src_layer], oprod_along_path[dst_layer], mat_tmp_work, dir, links, lookups);
         }
 
 
         //first link of path
         if (GOES_FORWARDS(dir0)){
             for (i = 0; i < SITES_ON_NODE; ++i) {
-                int nbr = nbr_table[(int)i][OPP_DIR(dir0)];
+            	int nbr = lookups[(int)i].nbr[OPP_DIR(dir0)];
+                //int nbr = nbr_table[(int)i][OPP_DIR(dir0)];
                 su3_adjoint(&links[nbr][dir0], &mats_along_path[1][i]);
             }
         }
@@ -257,7 +261,7 @@ void fermion_force_fn_multi_hw_friendly(
         for (ilink = 1; ilink < MAX_PATH_LENGTH; ++ilink) {
             if (ilink >= k || k == 0) continue;
             int dir = OPP_DIR(this_path->dir[ilink]);
-            link_transport_connection( mats_along_path[ilink], mats_along_path[ilink + 1], mat_tmp_work, dir, links, nbr_table);
+            link_transport_connection( mats_along_path[ilink], mats_along_path[ilink + 1], mat_tmp_work, dir, links, lookups);
         }
 
 
@@ -269,9 +273,10 @@ void fermion_force_fn_multi_hw_friendly(
             }
 
             for (i = 0; i < SITES_ON_NODE; ++i) {
-                int x,y,z,t;
+            	int parity = lookups[i].parity;
+                /*int x,y,z,t;
                 coords_from_site_index((int)i,&x,&y,&z,&t);
-                int parity = (x+y+z+t)&1;
+                int parity = (x+y+z+t)&1;*/
 
                 Real sign = (parity==0 ? base_coeff : -base_coeff);
                 scalar_mult_add_su3_matrix(&force_accum[dir0][i], &mat_tmp_work[i], sign, &force_accum[dir0][i]);
@@ -300,9 +305,10 @@ void fermion_force_fn_multi_hw_friendly(
 
             if (dir_val && GOES_FORWARDS(dir)) {
                 for (i = 0; i < SITES_ON_NODE; ++i) {
-                    int x,y,z,t;
-                    coords_from_site_index((int)i,&x,&y,&z,&t);
-                    int parity=(x+y+z+t)&1;
+                	int parity = lookups[i].parity;
+                	/*int x,y,z,t;
+                	coords_from_site_index((int)i,&x,&y,&z,&t);
+                	int parity = (x+y+z+t)&1;*/
 
                     Real sign = (parity==0 ? coeff : -coeff);
                     scalar_mult_add_su3_matrix(&force_accum[dir][i], &mat_tmp_work[i], sign, &force_accum[dir][i]);
@@ -313,9 +319,10 @@ void fermion_force_fn_multi_hw_friendly(
                 int odir = OPP_DIR(lastdir);
 
                 for (i = 0; i < SITES_ON_NODE; ++i) {
-                    int x,y,z,t;
-                    coords_from_site_index((int)i,&x,&y,&z,&t);
-                    int parity=(x+y+z+t)&1;
+                	int parity = lookups[i].parity;
+                	/*int x,y,z,t;
+                	coords_from_site_index((int)i,&x,&y,&z,&t);
+                	int parity = (x+y+z+t)&1;*/
 
                     Real sign = (parity==0 ? -coeff : coeff);
                     scalar_mult_add_su3_matrix(&force_accum[odir][i], &mat_tmp_work[i], sign, &force_accum[odir][i]);
