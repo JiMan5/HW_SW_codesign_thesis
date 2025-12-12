@@ -147,7 +147,7 @@ void make_anti_hermitian( su3_matrix *m3, anti_hermitmat *ah3 ) {
 }/* make_anti_hermitian */
 
 //link_transport_connection
-void link_transport_connection(su3_matrix *src, su3_matrix *dest, su3_matrix *work, int dir, su3_matrix (*links)[4], int lookups[SITES_ON_NODE]){
+void link_transport_connection(su3_matrix *src, su3_matrix *dest, su3_matrix *work, int dir, su3_matrix (*links)[4], lookup_t lookups[SITES_ON_NODE]){
 
 	size_t i;
     if (GOES_FORWARDS(dir)) {
